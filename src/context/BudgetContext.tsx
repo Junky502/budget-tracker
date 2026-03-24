@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useMemo, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useMemo, useEffect, ReactNode } from 'react';
 import { Income, Expense, Partner, CATEGORY_CONFIG, BudgetAlert, CutbackRecommendation, ExpenseCategory } from '@/types/budget';
 
 interface BudgetContextType {
@@ -23,6 +23,12 @@ interface BudgetContextType {
 }
 
 const BudgetContext = createContext<BudgetContextType | null>(null);
+
+const STORAGE_KEYS = {
+  incomes: 'hearth-incomes',
+  expenses: 'hearth-expenses',
+  partnerNames: 'hearth-partner-names',
+};
 
 const SAMPLE_INCOMES: Income[] = [
   { id: '1', partner: 'partner1', source: 'Salary', amount: 4200, recurring: true },
@@ -53,6 +59,11 @@ const SAMPLE_EXPENSES: Expense[] = [
   { id: '20', category: 'discretionary', description: 'Book', amount: 25, date: '2026-03-09', paidBy: 'partner2', shared: false },
 ];
 
+const DEFAULT_PARTNER_NAMES: Record<Partner, string> = {
+  partner1: 'Mārtiņš',
+  partner2: 'Marta',
+};
+
 const PREV_MONTH: Record<string, number> = {
   'housing': 1800, 'utilities': 95, 'groceries': 220, 'dining-out': 120,
   'entertainment': 100, 'transportation': 160, 'healthcare': 40,
@@ -61,13 +72,24 @@ const PREV_MONTH: Record<string, number> = {
   'discretionary': 80, 'home-maintenance': 0, 'education': 0,
 };
 
+function loadFromStorage<T>(key: string, fallback: T): T {
+  try {
+    const stored = localStorage.getItem(key);
+    return stored ? JSON.parse(stored) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 export function BudgetProvider({ children }: { children: ReactNode }) {
-  const [incomes, setIncomes] = useState<Income[]>(SAMPLE_INCOMES);
-  const [expenses, setExpenses] = useState<Expense[]>(SAMPLE_EXPENSES);
-  const [partnerNames, setPartnerNames] = useState<Record<Partner, string>>({
-    partner1: 'Partner A',
-    partner2: 'Partner B',
-  });
+  const [incomes, setIncomes] = useState<Income[]>(() => loadFromStorage(STORAGE_KEYS.incomes, SAMPLE_INCOMES));
+  const [expenses, setExpenses] = useState<Expense[]>(() => loadFromStorage(STORAGE_KEYS.expenses, SAMPLE_EXPENSES));
+  const [partnerNames, setPartnerNames] = useState<Record<Partner, string>>(() => loadFromStorage(STORAGE_KEYS.partnerNames, DEFAULT_PARTNER_NAMES));
+
+  // Persist to localStorage
+  useEffect(() => { localStorage.setItem(STORAGE_KEYS.incomes, JSON.stringify(incomes)); }, [incomes]);
+  useEffect(() => { localStorage.setItem(STORAGE_KEYS.expenses, JSON.stringify(expenses)); }, [expenses]);
+  useEffect(() => { localStorage.setItem(STORAGE_KEYS.partnerNames, JSON.stringify(partnerNames)); }, [partnerNames]);
 
   const addIncome = (income: Omit<Income, 'id'>) => {
     setIncomes(prev => [...prev, { ...income, id: crypto.randomUUID() }]);
