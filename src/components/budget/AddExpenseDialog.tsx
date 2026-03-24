@@ -9,7 +9,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Plus, AlertCircle } from 'lucide-react';
 
 export function AddExpenseDialog() {
-  const { partnerNames, addExpense, categories } = useBudget();
+  const { partnerNames, addExpense, categories, incomeByPartner, totalIncome } = useBudget();
   const [open, setOpen] = useState(false);
   const [category, setCategory] = useState<ExpenseCategory>('groceries');
   const [description, setDescription] = useState('');
@@ -29,15 +29,52 @@ export function AddExpenseDialog() {
     return Math.abs(splitTotal - totalAmount) > 0.01;
   }, [shared, amount, splitTotal, totalAmount]);
 
+  const isFormValid = useMemo(() => {
+    if (!description || !amount) return false;
+    if (shared) {
+      if (!partner1Split || !partner2Split) return false;
+      if (splitUnbalanced) return false;
+    }
+    return true;
+  }, [description, amount, shared, partner1Split, partner2Split, splitUnbalanced]);
+
   const autoSplit = () => {
     if (!amount) return;
-    const half = (parseFloat(amount) / 2).toFixed(2);
-    setPartner1Split(half);
-    setPartner2Split(half);
+    
+    const total = parseFloat(amount);
+    
+    // Split based on income ratio
+    if (totalIncome > 0) {
+      const partner1Percentage = incomeByPartner.partner1 / totalIncome;
+      const partner2Percentage = incomeByPartner.partner2 / totalIncome;
+      
+      const p1Amount = (total * partner1Percentage).toFixed(2);
+      const p2Amount = (total * partner2Percentage).toFixed(2);
+      
+      setPartner1Split(p1Amount);
+      setPartner2Split(p2Amount);
+    } else {
+      // Fallback to 50/50 if no income data
+      const half = (total / 2).toFixed(2);
+      setPartner1Split(half);
+      setPartner2Split(half);
+    }
   };
 
   const handleSubmit = () => {
     if (!description || !amount) return;
+    
+    // Validate shared expense split amounts
+    if (shared) {
+      if (!partner1Split || !partner2Split) {
+        alert('Please fill in split amounts for both partners');
+        return;
+      }
+      if (splitUnbalanced) {
+        alert('Split amounts must match the total expense');
+        return;
+      }
+    }
     
     const expenseData: any = {
       category,
@@ -112,7 +149,12 @@ export function AddExpenseDialog() {
           {shared && (
             <div className="space-y-3 rounded-lg bg-muted/50 p-3">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-foreground">Split Amount</h3>
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground">Split Amount</h3>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Income ratio: {totalIncome > 0 ? `${((incomeByPartner.partner1 / totalIncome) * 100).toFixed(0)}% / ${((incomeByPartner.partner2 / totalIncome) * 100).toFixed(0)}%` : 'No income data'}
+                  </p>
+                </div>
                 <Button 
                   type="button"
                   variant="outline" 
@@ -120,7 +162,7 @@ export function AddExpenseDialog() {
                   onClick={autoSplit}
                   disabled={!amount}
                 >
-                  Split 50/50
+                  Split by Income
                 </Button>
               </div>
               
@@ -166,7 +208,7 @@ export function AddExpenseDialog() {
             </div>
           )}
 
-          <Button onClick={handleSubmit} className="w-full">Add Expense</Button>
+          <Button onClick={handleSubmit} className="w-full" disabled={!isFormValid}>Add Expense</Button>
         </div>
       </DialogContent>
     </Dialog>

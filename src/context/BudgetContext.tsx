@@ -287,27 +287,76 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const addExpense = useCallback(async (expense: Omit<Expense, 'id'>) => {
-    const { data, error } = await supabase.from('expenses').insert({
-      category: expense.category,
-      description: expense.description,
-      amount: expense.amount,
-      date: expense.date,
-      paid_by: expense.paidBy,
-      shared: expense.shared,
-      split_amounts: expense.splitAmounts ? JSON.stringify(expense.splitAmounts) : null,
-    }).select().single();
-    
-    if (data && !error) {
-      setExpenses(prev => [...prev, {
-        id: data.id, 
-        category: data.category as ExpenseCategory, 
-        description: data.description,
-        amount: Number(data.amount), 
-        date: data.date, 
-        paidBy: data.paid_by as Partner, 
-        shared: data.shared,
-        splitAmounts: data.split_amounts ? JSON.parse(data.split_amounts) : undefined,
-      }]);
+    try {
+      console.log('Adding expense:', expense);
+      
+      // First try with split_amounts
+      const { data, error } = await supabase.from('expenses').insert({
+        category: expense.category,
+        description: expense.description,
+        amount: expense.amount,
+        date: expense.date,
+        paid_by: expense.paidBy,
+        shared: expense.shared,
+        split_amounts: expense.splitAmounts ? JSON.stringify(expense.splitAmounts) : null,
+      }).select().single();
+      
+      if (error) {
+        console.error('Error adding expense to Supabase:', error);
+        
+        // If error mentions split_amounts column, try without it (fallback for older schema)
+        if (error.message && error.message.includes('split_amounts')) {
+          console.log('split_amounts column not found, retrying without it...');
+          const { data: data2, error: error2 } = await supabase.from('expenses').insert({
+            category: expense.category,
+            description: expense.description,
+            amount: expense.amount,
+            date: expense.date,
+            paid_by: expense.paidBy,
+            shared: expense.shared,
+          }).select().single();
+          
+          if (error2) {
+            console.error('Error adding expense (fallback):', error2);
+            alert('Error adding expense: ' + (error2.message || 'Unknown error'));
+            return;
+          }
+          
+          if (data2) {
+            console.log('Expense added successfully (fallback):', data2);
+            setExpenses(prev => [...prev, {
+              id: data2.id, 
+              category: data2.category as ExpenseCategory, 
+              description: data2.description,
+              amount: Number(data2.amount), 
+              date: data2.date, 
+              paidBy: data2.paid_by as Partner, 
+              shared: data2.shared,
+              splitAmounts: undefined,
+            }]);
+          }
+        } else {
+          alert('Error adding expense: ' + (error.message || 'Unknown error'));
+        }
+        return;
+      }
+      
+      if (data) {
+        console.log('Expense added successfully:', data);
+        setExpenses(prev => [...prev, {
+          id: data.id, 
+          category: data.category as ExpenseCategory, 
+          description: data.description,
+          amount: Number(data.amount), 
+          date: data.date, 
+          paidBy: data.paid_by as Partner, 
+          shared: data.shared,
+          splitAmounts: data.split_amounts ? JSON.parse(data.split_amounts) : undefined,
+        }]);
+      }
+    } catch (err) {
+      console.error('Exception while adding expense:', err);
+      alert('Error adding expense: ' + (err instanceof Error ? err.message : 'Unknown error'));
     }
   }, []);
 
