@@ -83,7 +83,50 @@ export interface SeasonalRecap {
   topChanges: CategoryDelta[];
 }
 
-export const CATEGORY_CONFIG: CategoryBudget[] = [
+export interface CategoryBudget {
+  category: ExpenseCategory;
+  recommended: number; // percentage of income
+  label: string;
+  icon: string;
+}
+
+export interface StoredCategory {
+  id: string;
+  category: string;
+  label: string;
+  icon: string;
+  recommended: number;
+}
+
+export interface BudgetAlert {
+  category: ExpenseCategory;
+  label: string;
+  spent: number;
+  recommended: number;
+  percentage: number;
+  status: 'green' | 'yellow' | 'red';
+}
+
+export interface CutbackRecommendation {
+  category: ExpenseCategory;
+  label: string;
+  currentSpend: number;
+  suggestedSpend: number;
+  savings: number;
+  message: string;
+}
+
+export interface CategoryDelta {
+  category: ExpenseCategory;
+  label: string;
+  icon: string;
+  currentExpenses: number;
+  previousIncome: number;
+  previousExpenses: number;
+  topChanges: CategoryDelta[];
+}
+
+export const DEFAULT_CATEGORIES: CategoryBudget[] = [
   { category: 'housing', recommended: 30, label: 'Housing', icon: '🏠' },
   { category: 'utilities', recommended: 5, label: 'Utilities', icon: '💡' },
   { category: 'groceries', recommended: 10, label: 'Groceries', icon: '🛒' },
@@ -102,6 +145,8 @@ export const CATEGORY_CONFIG: CategoryBudget[] = [
   { category: 'home-maintenance', recommended: 3, label: 'Home', icon: '🔧' },
   { category: 'discretionary', recommended: 5, label: 'Discretionary', icon: '✨' },
 ];
+
+export const CATEGORY_CONFIG: CategoryBudget[] = DEFAULT_CATEGORIES;
 
 export const PARTNER_NAMES: Record<Partner, string> = {
   partner1: 'Partner A',

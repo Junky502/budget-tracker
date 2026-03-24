@@ -1,5 +1,4 @@
 import { useBudget } from '@/context/BudgetContext';
-import { CATEGORY_CONFIG } from '@/types/budget';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
 const COLORS = [
@@ -12,9 +11,9 @@ const COLORS = [
 ];
 
 export function SpendingChart() {
-  const { expensesByCategory } = useBudget();
+  const { expensesByCategory, categories } = useBudget();
 
-  const data = CATEGORY_CONFIG
+  const data = categories
     .filter(c => (expensesByCategory[c.category] || 0) > 0)
     .map(c => ({ name: c.label, value: expensesByCategory[c.category] || 0, icon: c.icon }))
     .sort((a, b) => b.value - a.value);

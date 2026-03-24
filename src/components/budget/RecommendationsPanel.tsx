@@ -1,9 +1,8 @@
 import { useBudget } from '@/context/BudgetContext';
-import { CATEGORY_CONFIG } from '@/types/budget';
 import { motion } from 'framer-motion';
 
 export function RecommendationsPanel() {
-  const { recommendations } = useBudget();
+  const { recommendations, categories } = useBudget();
 
   if (recommendations.length === 0) {
     return (
@@ -19,7 +18,7 @@ export function RecommendationsPanel() {
       <h2 className="mb-4 text-lg font-semibold text-foreground">Cut-Back Ideas</h2>
       <div className="space-y-3">
         {recommendations.map((rec, i) => {
-          const config = CATEGORY_CONFIG.find(c => c.category === rec.category)!;
+          const categoryData = categories.find(c => c.category === rec.category);
           return (
             <motion.div
               key={rec.category}
@@ -29,7 +28,7 @@ export function RecommendationsPanel() {
               className="rounded-md border border-border bg-surface-alt p-4"
             >
               <div className="mb-1 flex items-center justify-between">
-                <span className="text-sm font-medium text-foreground">{config.icon} {rec.label}</span>
+                <span className="text-sm font-medium text-foreground">{categoryData?.icon} {rec.label}</span>
                 <span className="font-mono-data text-sm font-semibold text-primary">Save €{Math.round(rec.savings)}</span>
               </div>
               <p className="text-xs leading-relaxed text-muted-foreground">{rec.message}</p>

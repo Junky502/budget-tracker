@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useMemo, useEffect, useCallback, ReactNode } from 'react';
-import { Income, Expense, Partner, CATEGORY_CONFIG, BudgetAlert, CutbackRecommendation, ExpenseCategory } from '@/types/budget';
+import { Income, Expense, Partner, CATEGORY_CONFIG, BudgetAlert, CutbackRecommendation, ExpenseCategory, StoredCategory, DEFAULT_CATEGORIES } from '@/types/budget';
 import { supabase } from '@/lib/supabase';
 
 interface BudgetContextType {
@@ -24,6 +24,10 @@ interface BudgetContextType {
   seasonalData: { current: { totalExpenses: number; expensesByCategory: Record<string, number> }; previous: { totalExpenses: number; expensesByCategory: Record<string, number> } };
   currentMonth: string; // YYYY-MM
   setCurrentMonth: (month: string) => void;
+  categories: StoredCategory[];
+  addCategory: (category: Omit<StoredCategory, 'id'>) => void;
+  removeCategory: (id: string) => void;
+  updateCategory: (id: string, updates: Partial<StoredCategory>) => void;
   loading: boolean;
 }
 
@@ -80,6 +84,7 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   });
+  const [categories, setCategories] = useState<StoredCategory[]>([]);
 
   // Load data from Supabase on mount
   useEffect(() => {
@@ -149,6 +154,34 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
             { key: 'partner1_name', value: DEFAULT_PARTNER_NAMES.partner1 },
             { key: 'partner2_name', value: DEFAULT_PARTNER_NAMES.partner2 },
           ]);
+        }
+
+        // Fetch categories
+        const { data: dbCategories } = await supabase.from('categories').select('*');
+        if (dbCategories && dbCategories.length > 0) {
+          setCategories(dbCategories.map(c => ({
+            id: c.id,
+            category: c.category,
+            label: c.label,
+            icon: c.icon,
+            recommended: Number(c.recommended),
+          })));
+        } else {
+          // Seed with default categories
+          const { data: seeded } = await supabase.from('categories').insert(
+            DEFAULT_CATEGORIES.map(({ category, label, icon, recommended }) => ({
+              category, label, icon, recommended
+            }))
+          ).select();
+          if (seeded) {
+            setCategories(seeded.map(c => ({
+              id: c.id,
+              category: c.category,
+              label: c.label,
+              icon: c.icon,
+              recommended: Number(c.recommended),
+            })));
+          }
         }
       } catch (err) {
         console.error('Failed to load from Supabase, using defaults:', err);
@@ -221,6 +254,35 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
     setCurrentMonthState(month);
   }, []);
 
+  const addCategory = useCallback(async (category: Omit<StoredCategory, 'id'>) => {
+    const { data, error } = await supabase.from('categories').insert({
+      category: category.category,
+      label: category.label,
+      icon: category.icon,
+      recommended: category.recommended,
+    }).select().single();
+
+    if (data && !error) {
+      setCategories(prev => [...prev, {
+        id: data.id,
+        category: data.category,
+        label: data.label,
+        icon: data.icon,
+        recommended: Number(data.recommended),
+      }]);
+    }
+  }, []);
+
+  const removeCategory = useCallback(async (id: string) => {
+    setCategories(prev => prev.filter(c => c.id !== id));
+    await supabase.from('categories').delete().eq('id', id);
+  }, []);
+
+  const updateCategory = useCallback(async (id: string, updates: Partial<StoredCategory>) => {
+    setCategories(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
+    await supabase.from('categories').update(updates).eq('id', id);
+  }, []);
+
   const computed = useMemo(() => {
     // Filter expenses by current month
     const currentMonthExpenses = expenses.filter(e => e.date.startsWith(currentMonth));
@@ -251,7 +313,7 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
     const savingsRate = totalIncome > 0 ? ((totalIncome - totalExpenses) / totalIncome) * 100 : 0;
     const remainingBudget = totalIncome - totalExpenses;
 
-    const alerts: BudgetAlert[] = CATEGORY_CONFIG
+    const alerts: BudgetAlert[] = categories
       .map(cat => {
         const spent = expensesByCategory[cat.category] || 0;
         const recommendedAmount = (cat.recommended / 100) * totalIncome;
@@ -259,7 +321,7 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
         let status: 'green' | 'yellow' | 'red' = 'green';
         if (percentage > cat.recommended * 1.2) status = 'red';
         else if (percentage > cat.recommended * 0.9) status = 'yellow';
-        return { category: cat.category, label: cat.label, spent, recommended: recommendedAmount, percentage, status };
+        return { category: cat.category as ExpenseCategory, label: cat.label, spent, recommended: recommendedAmount, percentage, status };
       })
       .filter(a => a.spent > 0)
       .sort((a, b) => {
@@ -323,10 +385,10 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
     };
 
     return { totalIncome, incomeByPartner, totalExpenses, expensesByCategory, expensesByPartner, savingsRate, remainingBudget, alerts, recommendations, previousMonth, seasonalData };
-  }, [incomes, expenses, currentMonth]);
+  }, [incomes, expenses, currentMonth, categories]);
 
   return (
-    <BudgetContext.Provider value={{ incomes, expenses, partnerNames, setPartnerNames, addIncome, removeIncome, addExpense, removeExpense, loading, currentMonth, setCurrentMonth, ...computed }}>
+    <BudgetContext.Provider value={{ incomes, expenses, partnerNames, setPartnerNames, addIncome, removeIncome, addExpense, removeExpense, loading, currentMonth, setCurrentMonth, categories, addCategory, removeCategory, updateCategory, ...computed }}>
       {children}
     </BudgetContext.Provider>
   );

@@ -1,9 +1,8 @@
 import { useBudget } from '@/context/BudgetContext';
-import { CATEGORY_CONFIG } from '@/types/budget';
 import { ArrowUp, ArrowDown, Minus } from 'lucide-react';
 
 export function SeasonalRecap() {
-  const { seasonalData, currentMonth } = useBudget();
+  const { seasonalData, currentMonth, categories } = useBudget();
 
   const getQuarterName = (monthStr: string) => {
     const month = parseInt(monthStr.split('-')[1]);
@@ -24,7 +23,7 @@ export function SeasonalRecap() {
   const diff = seasonalData.current.totalExpenses - seasonalData.previous.totalExpenses;
   const diffPct = seasonalData.previous.totalExpenses > 0 ? (diff / seasonalData.previous.totalExpenses) * 100 : 0;
 
-  const changes = CATEGORY_CONFIG
+  const changes = categories
     .map(c => {
       const current = seasonalData.current.expensesByCategory[c.category] || 0;
       const prev = seasonalData.previous.expensesByCategory[c.category] || 0;

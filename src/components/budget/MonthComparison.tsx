@@ -1,14 +1,13 @@
 import { useBudget } from '@/context/BudgetContext';
-import { CATEGORY_CONFIG } from '@/types/budget';
 import { ArrowUp, ArrowDown, Minus } from 'lucide-react';
 
 export function MonthComparison() {
-  const { totalExpenses, expensesByCategory, previousMonth } = useBudget();
+  const { totalExpenses, expensesByCategory, previousMonth, categories } = useBudget();
 
   const diff = totalExpenses - previousMonth.totalExpenses;
   const diffPct = previousMonth.totalExpenses > 0 ? (diff / previousMonth.totalExpenses) * 100 : 0;
 
-  const changes = CATEGORY_CONFIG
+  const changes = categories
     .map(c => {
       const current = expensesByCategory[c.category] || 0;
       const prev = previousMonth.expensesByCategory[c.category] || 0;

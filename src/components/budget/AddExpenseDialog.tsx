@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useBudget } from '@/context/BudgetContext';
-import { CATEGORY_CONFIG, ExpenseCategory, Partner } from '@/types/budget';
+import { ExpenseCategory, Partner } from '@/types/budget';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus } from 'lucide-react';
 
 export function AddExpenseDialog() {
-  const { addExpense, partnerNames } = useBudget();
+  const { partnerNames, addExpense, categories } = useBudget();
   const [open, setOpen] = useState(false);
   const [category, setCategory] = useState<ExpenseCategory>('groceries');
   const [description, setDescription] = useState('');
@@ -48,7 +48,7 @@ export function AddExpenseDialog() {
             <Select value={category} onValueChange={v => setCategory(v as ExpenseCategory)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                {CATEGORY_CONFIG.map(c => (
+                {categories.map(c => (
                   <SelectItem key={c.category} value={c.category}>{c.icon} {c.label}</SelectItem>
                 ))}
               </SelectContent>

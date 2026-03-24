@@ -1,15 +1,14 @@
 import { useBudget } from '@/context/BudgetContext';
-import { CATEGORY_CONFIG } from '@/types/budget';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 
 export function PartnerView() {
-  const { expenses, partnerNames, expensesByPartner } = useBudget();
+  const { expenses, partnerNames, expensesByPartner, categories } = useBudget();
 
   const sharedTotal = expenses.filter(e => e.shared).reduce((s, e) => s + e.amount, 0);
   const personalP1 = expenses.filter(e => !e.shared && e.paidBy === 'partner1').reduce((s, e) => s + e.amount, 0);
   const personalP2 = expenses.filter(e => !e.shared && e.paidBy === 'partner2').reduce((s, e) => s + e.amount, 0);
 
-  const topCategories = CATEGORY_CONFIG
+  const topCategories = categories
     .map(c => {
       const p1 = expenses.filter(e => e.category === c.category && e.paidBy === 'partner1').reduce((s, e) => s + e.amount, 0);
       const p2 = expenses.filter(e => e.category === c.category && e.paidBy === 'partner2').reduce((s, e) => s + e.amount, 0);
