@@ -1,9 +1,8 @@
 import { useBudget } from '@/context/BudgetContext';
-import { CATEGORY_CONFIG } from '@/types/budget';
 import { Trash2 } from 'lucide-react';
 
 export function RecentExpenses() {
-  const { expenses, partnerNames, removeExpense, currentMonth } = useBudget();
+  const { expenses, partnerNames, removeExpense, currentMonth, categories } = useBudget();
 
   const currentMonthExpenses = expenses.filter(e => e.date.startsWith(currentMonth));
   const sorted = [...currentMonthExpenses].sort((a, b) => b.date.localeCompare(a.date));
@@ -13,7 +12,7 @@ export function RecentExpenses() {
       <h2 className="mb-4 text-lg font-semibold text-foreground">Recent Expenses</h2>
       <div className="space-y-1">
         {sorted.slice(0, 10).map(exp => {
-          const config = CATEGORY_CONFIG.find(c => c.category === exp.category)!;
+          const config = categories.find(c => c.category === exp.category)!;
           return (
             <div key={exp.id} className="group flex items-center justify-between rounded-md px-3 py-2 transition-colors hover:bg-surface-alt">
               <div className="flex items-center gap-3">

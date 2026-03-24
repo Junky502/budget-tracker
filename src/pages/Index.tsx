@@ -9,7 +9,6 @@ import { PartnerView } from '@/components/budget/PartnerView';
 import { AddExpenseDialog } from '@/components/budget/AddExpenseDialog';
 import { SeasonalRecap } from '@/components/budget/SeasonalRecap';
 import { CategoryManager } from '@/components/budget/CategoryManager';
-import { RecentExpenses } from '@/components/budget/RecentExpenses';
 import { motion } from 'framer-motion';
 import { Wallet, ChevronLeft, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
@@ -61,7 +60,10 @@ function Header() {
             </div>
           </div>
         </div>
-        <AddExpenseDialog />
+        <div className="flex items-center gap-2">
+          <CategoryManager />
+          <AddExpenseDialog />
+        </div>
       </div>
     </header>
   );
@@ -104,7 +106,7 @@ export default function Index() {
           </div>
 
           {/* Bottom row */}
-          <div className="mt-6 grid gap-6 lg:grid-cols-5">
+          <div className="mt-6 grid gap-6 lg:grid-cols-4">
             <motion.div variants={fadeUp}>
               <RecommendationsPanel />
             </motion.div>
@@ -113,9 +115,6 @@ export default function Index() {
             </motion.div>
             <motion.div variants={fadeUp}>
               <SeasonalRecap />
-            </motion.div>
-            <motion.div variants={fadeUp}>
-              <CategoryManager />
             </motion.div>
             <motion.div variants={fadeUp}>
               <RecentExpenses />

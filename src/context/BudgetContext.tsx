@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useMemo, useEffect, useCallback, ReactNode } from 'react';
-import { Income, Expense, Partner, CATEGORY_CONFIG, BudgetAlert, CutbackRecommendation, ExpenseCategory, StoredCategory, DEFAULT_CATEGORIES } from '@/types/budget';
+import { Income, Expense, Partner, BudgetAlert, CutbackRecommendation, ExpenseCategory, StoredCategory, DEFAULT_CATEGORIES } from '@/types/budget';
 import { supabase } from '@/lib/supabase';
 
 interface BudgetContextType {
@@ -157,29 +157,47 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
         }
 
         // Fetch categories
-        const { data: dbCategories } = await supabase.from('categories').select('*');
-        if (dbCategories && dbCategories.length > 0) {
-          setCategories(dbCategories.map(c => ({
-            id: c.id,
-            category: c.category,
-            label: c.label,
-            icon: c.icon,
-            recommended: Number(c.recommended),
-          })));
-        } else {
-          // Seed with default categories
-          const { data: seeded } = await supabase.from('categories').insert(
-            DEFAULT_CATEGORIES.map(({ category, label, icon, recommended }) => ({
-              category, label, icon, recommended
-            }))
-          ).select();
-          if (seeded) {
-            setCategories(seeded.map(c => ({
+        try {
+          const { data: dbCategories } = await supabase.from('categories').select('*');
+          if (dbCategories && dbCategories.length > 0) {
+            setCategories(dbCategories.map(c => ({
               id: c.id,
               category: c.category,
               label: c.label,
               icon: c.icon,
               recommended: Number(c.recommended),
+            })));
+          } else {
+            // Seed with default categories
+            const { data: seeded } = await supabase.from('categories').insert(
+              DEFAULT_CATEGORIES.map(({ category, label, icon, recommended }) => ({
+                category, label, icon, recommended
+              }))
+            ).select();
+            if (seeded) {
+              setCategories(seeded.map(c => ({
+                id: c.id,
+                category: c.category,
+                label: c.label,
+                icon: c.icon,
+                recommended: Number(c.recommended),
+              })));
+            }
+          }
+        } catch (categoryErr) {
+          console.warn('Failed to load categories from Supabase, using localStorage fallback:', categoryErr);
+          // Load from localStorage
+          const savedCategories = JSON.parse(localStorage.getItem('budget-categories') || '[]');
+          if (savedCategories.length > 0) {
+            setCategories(savedCategories);
+          } else {
+            // Use default categories
+            setCategories(DEFAULT_CATEGORIES.map((cat, index) => ({
+              id: `default-${index}`,
+              category: cat.category,
+              label: cat.label,
+              icon: cat.icon,
+              recommended: cat.recommended,
             })));
           }
         }
@@ -187,6 +205,21 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
         console.error('Failed to load from Supabase, using defaults:', err);
         setIncomes(SAMPLE_INCOMES);
         setExpenses(SAMPLE_EXPENSES);
+        setPartnerNamesState(DEFAULT_PARTNER_NAMES);
+
+        // Load categories from localStorage or use defaults
+        const savedCategories = JSON.parse(localStorage.getItem('budget-categories') || '[]');
+        if (savedCategories.length > 0) {
+          setCategories(savedCategories);
+        } else {
+          setCategories(DEFAULT_CATEGORIES.map((cat, index) => ({
+            id: `default-${index}`,
+            category: cat.category,
+            label: cat.label,
+            icon: cat.icon,
+            recommended: cat.recommended,
+          })));
+        }
       } finally {
         setLoading(false);
       }
@@ -255,32 +288,71 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const addCategory = useCallback(async (category: Omit<StoredCategory, 'id'>) => {
-    const { data, error } = await supabase.from('categories').insert({
-      category: category.category,
-      label: category.label,
-      icon: category.icon,
-      recommended: category.recommended,
-    }).select().single();
+    try {
+      const { data, error } = await supabase.from('categories').insert({
+        category: category.category,
+        label: category.label,
+        icon: category.icon,
+        recommended: category.recommended,
+      }).select().single();
 
-    if (data && !error) {
-      setCategories(prev => [...prev, {
-        id: data.id,
-        category: data.category,
-        label: data.label,
-        icon: data.icon,
-        recommended: Number(data.recommended),
-      }]);
+      if (data && !error) {
+        setCategories(prev => [...prev, {
+          id: data.id,
+          category: data.category,
+          label: data.label,
+          icon: data.icon,
+          recommended: Number(data.recommended),
+        }]);
+        return;
+      }
+    } catch (err) {
+      console.warn('Supabase addCategory failed, using localStorage fallback:', err);
     }
+
+    // Fallback to localStorage
+    const newCategory: StoredCategory = {
+      id: `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      ...category,
+    };
+    setCategories(prev => [...prev, newCategory]);
+
+    // Save to localStorage
+    const savedCategories = JSON.parse(localStorage.getItem('budget-categories') || '[]');
+    savedCategories.push(newCategory);
+    localStorage.setItem('budget-categories', JSON.stringify(savedCategories));
   }, []);
 
   const removeCategory = useCallback(async (id: string) => {
     setCategories(prev => prev.filter(c => c.id !== id));
-    await supabase.from('categories').delete().eq('id', id);
+
+    try {
+      await supabase.from('categories').delete().eq('id', id);
+    } catch (err) {
+      console.warn('Supabase removeCategory failed, using localStorage fallback:', err);
+
+      // Fallback to localStorage
+      const savedCategories = JSON.parse(localStorage.getItem('budget-categories') || '[]');
+      const filteredCategories = savedCategories.filter((c: StoredCategory) => c.id !== id);
+      localStorage.setItem('budget-categories', JSON.stringify(filteredCategories));
+    }
   }, []);
 
   const updateCategory = useCallback(async (id: string, updates: Partial<StoredCategory>) => {
     setCategories(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
-    await supabase.from('categories').update(updates).eq('id', id);
+
+    try {
+      await supabase.from('categories').update(updates).eq('id', id);
+    } catch (err) {
+      console.warn('Supabase updateCategory failed, using localStorage fallback:', err);
+
+      // Fallback to localStorage
+      const savedCategories = JSON.parse(localStorage.getItem('budget-categories') || '[]');
+      const updatedCategories = savedCategories.map((c: StoredCategory) =>
+        c.id === id ? { ...c, ...updates } : c
+      );
+      localStorage.setItem('budget-categories', JSON.stringify(updatedCategories));
+    }
   }, []);
 
   const computed = useMemo(() => {
@@ -332,7 +404,7 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
     const recommendations: CutbackRecommendation[] = alerts
       .filter(a => a.status === 'red' || a.status === 'yellow')
       .map(a => {
-        const config = CATEGORY_CONFIG.find(c => c.category === a.category)!;
+        const config = categories.find(c => c.category === a.category)!;
         const suggestedSpend = (config.recommended / 100) * totalIncome;
         const savings = a.spent - suggestedSpend;
         return {

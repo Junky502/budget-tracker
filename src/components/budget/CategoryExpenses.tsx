@@ -1,5 +1,4 @@
 import { useBudget } from '@/context/BudgetContext';
-import { CATEGORY_CONFIG } from '@/types/budget';
 import { Trash2 } from 'lucide-react';
 
 interface CategoryExpensesProps {
@@ -8,9 +7,9 @@ interface CategoryExpensesProps {
 }
 
 export function CategoryExpenses({ category, onClose }: CategoryExpensesProps) {
-  const { expenses, partnerNames, removeExpense, currentMonth } = useBudget();
+  const { expenses, partnerNames, removeExpense, currentMonth, categories } = useBudget();
 
-  const config = CATEGORY_CONFIG.find(c => c.category === category);
+  const config = categories.find(c => c.category === category);
   const categoryExpenses = expenses
     .filter(e => e.category === category && e.date.startsWith(currentMonth))
     .sort((a, b) => b.date.localeCompare(a.date));
