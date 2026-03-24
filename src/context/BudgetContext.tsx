@@ -40,24 +40,24 @@ const SAMPLE_INCOMES: Income[] = [
 ];
 
 const SAMPLE_EXPENSES: Expense[] = [
-  { id: '1', category: 'housing', description: 'Rent', amount: 1800, date: '2026-03-01', paidBy: 'partner1', shared: true },
-  { id: '2', category: 'utilities', description: 'Electricity', amount: 120, date: '2026-03-03', paidBy: 'partner2', shared: true },
-  { id: '3', category: 'groceries', description: 'Weekly shop', amount: 185, date: '2026-03-05', paidBy: 'partner1', shared: true },
-  { id: '4', category: 'groceries', description: 'Farmers market', amount: 65, date: '2026-03-12', paidBy: 'partner2', shared: true },
-  { id: '5', category: 'dining-out', description: 'Sushi dinner', amount: 95, date: '2026-03-07', paidBy: 'partner1', shared: true },
-  { id: '6', category: 'dining-out', description: 'Brunch', amount: 48, date: '2026-03-14', paidBy: 'partner2', shared: true },
-  { id: '7', category: 'dining-out', description: 'Pizza night', amount: 42, date: '2026-03-20', paidBy: 'partner1', shared: true },
-  { id: '8', category: 'entertainment', description: 'Cinema', amount: 32, date: '2026-03-08', paidBy: 'partner2', shared: true },
-  { id: '9', category: 'entertainment', description: 'Concert tickets', amount: 150, date: '2026-03-15', paidBy: 'partner1', shared: true },
+  { id: '1', category: 'housing', description: 'Rent', amount: 1800, date: '2026-03-01', paidBy: 'partner1', shared: true, splitAmounts: { partner1: 900, partner2: 900 } },
+  { id: '2', category: 'utilities', description: 'Electricity', amount: 120, date: '2026-03-03', paidBy: 'partner2', shared: true, splitAmounts: { partner1: 60, partner2: 60 } },
+  { id: '3', category: 'groceries', description: 'Weekly shop', amount: 185, date: '2026-03-05', paidBy: 'partner1', shared: true, splitAmounts: { partner1: 92.5, partner2: 92.5 } },
+  { id: '4', category: 'groceries', description: 'Farmers market', amount: 65, date: '2026-03-12', paidBy: 'partner2', shared: true, splitAmounts: { partner1: 32.5, partner2: 32.5 } },
+  { id: '5', category: 'dining-out', description: 'Sushi dinner', amount: 95, date: '2026-03-07', paidBy: 'partner1', shared: true, splitAmounts: { partner1: 47.5, partner2: 47.5 } },
+  { id: '6', category: 'dining-out', description: 'Brunch', amount: 48, date: '2026-03-14', paidBy: 'partner2', shared: true, splitAmounts: { partner1: 24, partner2: 24 } },
+  { id: '7', category: 'dining-out', description: 'Pizza night', amount: 42, date: '2026-03-20', paidBy: 'partner1', shared: true, splitAmounts: { partner1: 21, partner2: 21 } },
+  { id: '8', category: 'entertainment', description: 'Cinema', amount: 32, date: '2026-03-08', paidBy: 'partner2', shared: true, splitAmounts: { partner1: 16, partner2: 16 } },
+  { id: '9', category: 'entertainment', description: 'Concert tickets', amount: 150, date: '2026-03-15', paidBy: 'partner1', shared: true, splitAmounts: { partner1: 75, partner2: 75 } },
   { id: '10', category: 'transportation', description: 'Metro pass', amount: 80, date: '2026-03-01', paidBy: 'partner1', shared: false },
   { id: '11', category: 'transportation', description: 'Metro pass', amount: 80, date: '2026-03-01', paidBy: 'partner2', shared: false },
   { id: '12', category: 'healthcare', description: 'Pharmacy', amount: 35, date: '2026-03-10', paidBy: 'partner1', shared: false },
-  { id: '13', category: 'subscriptions', description: 'Streaming', amount: 45, date: '2026-03-01', paidBy: 'partner1', shared: true },
+  { id: '13', category: 'subscriptions', description: 'Streaming', amount: 45, date: '2026-03-01', paidBy: 'partner1', shared: true, splitAmounts: { partner1: 22.5, partner2: 22.5 } },
   { id: '14', category: 'personal-care', description: 'Haircut', amount: 55, date: '2026-03-11', paidBy: 'partner2', shared: false },
   { id: '15', category: 'clothing', description: 'New shoes', amount: 120, date: '2026-03-18', paidBy: 'partner1', shared: false },
-  { id: '16', category: 'savings', description: 'Emergency fund', amount: 500, date: '2026-03-01', paidBy: 'partner1', shared: true },
-  { id: '17', category: 'insurance', description: 'Health insurance', amount: 280, date: '2026-03-01', paidBy: 'partner2', shared: true },
-  { id: '18', category: 'pets', description: 'Dog food', amount: 60, date: '2026-03-06', paidBy: 'partner2', shared: true },
+  { id: '16', category: 'savings', description: 'Emergency fund', amount: 500, date: '2026-03-01', paidBy: 'partner1', shared: true, splitAmounts: { partner1: 250, partner2: 250 } },
+  { id: '17', category: 'insurance', description: 'Health insurance', amount: 280, date: '2026-03-01', paidBy: 'partner2', shared: true, splitAmounts: { partner1: 140, partner2: 140 } },
+  { id: '18', category: 'pets', description: 'Dog food', amount: 60, date: '2026-03-06', paidBy: 'partner2', shared: true, splitAmounts: { partner1: 30, partner2: 30 } },
   { id: '19', category: 'gifts', description: 'Birthday gift', amount: 75, date: '2026-03-22', paidBy: 'partner1', shared: false },
   { id: '20', category: 'discretionary', description: 'Book', amount: 25, date: '2026-03-09', paidBy: 'partner2', shared: false },
 ];
@@ -91,9 +91,14 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
     async function loadData() {
       setLoading(true);
       try {
+        console.log('Starting to load data from Supabase...');
+        
         // Fetch incomes
-        const { data: dbIncomes } = await supabase.from('incomes').select('*');
+        const { data: dbIncomes, error: incomesError } = await supabase.from('incomes').select('*');
+        if (incomesError) throw incomesError;
+        
         if (dbIncomes && dbIncomes.length > 0) {
+          console.log('Loaded incomes from DB:', dbIncomes.length);
           setIncomes(dbIncomes.map(r => ({
             id: r.id,
             partner: r.partner as Partner,
@@ -102,10 +107,14 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
             recurring: r.recurring,
           })));
         } else {
+          console.log('No incomes in DB, seeding with sample data...');
           // Seed with sample data
-          const { data: seeded } = await supabase.from('incomes').insert(
+          const { data: seeded, error: seedError } = await supabase.from('incomes').insert(
             SAMPLE_INCOMES.map(({ id, ...rest }) => rest)
           ).select();
+          
+          if (seedError) throw seedError;
+          
           if (seeded) {
             setIncomes(seeded.map(r => ({
               id: r.id, partner: r.partner as Partner, source: r.source,
@@ -115,8 +124,11 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
         }
 
         // Fetch expenses
-        const { data: dbExpenses } = await supabase.from('expenses').select('*');
+        const { data: dbExpenses, error: expensesError } = await supabase.from('expenses').select('*');
+        if (expensesError) throw expensesError;
+        
         if (dbExpenses && dbExpenses.length > 0) {
+          console.log('Loaded expenses from DB:', dbExpenses.length);
           setExpenses(dbExpenses.map(r => ({
             id: r.id,
             category: r.category as ExpenseCategory,
@@ -125,23 +137,41 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
             date: r.date,
             paidBy: r.paid_by as Partner,
             shared: r.shared,
+            splitAmounts: r.split_amounts ? JSON.parse(r.split_amounts) : undefined,
           })));
         } else {
+          console.log('No expenses in DB, seeding with sample data...');
           // Seed with sample data
-          const { data: seeded } = await supabase.from('expenses').insert(
-            SAMPLE_EXPENSES.map(({ id, paidBy, ...rest }) => ({ ...rest, paid_by: paidBy }))
+          const { data: seeded, error: seedError } = await supabase.from('expenses').insert(
+            SAMPLE_EXPENSES.map(({ id, paidBy, splitAmounts, ...rest }) => ({ 
+              ...rest, 
+              paid_by: paidBy,
+              split_amounts: splitAmounts ? JSON.stringify(splitAmounts) : null,
+            }))
           ).select();
+          
+          if (seedError) throw seedError;
+          
           if (seeded) {
             setExpenses(seeded.map(r => ({
-              id: r.id, category: r.category as ExpenseCategory, description: r.description,
-              amount: Number(r.amount), date: r.date, paidBy: r.paid_by as Partner, shared: r.shared,
+              id: r.id, 
+              category: r.category as ExpenseCategory, 
+              description: r.description,
+              amount: Number(r.amount), 
+              date: r.date, 
+              paidBy: r.paid_by as Partner, 
+              shared: r.shared,
+              splitAmounts: r.split_amounts ? JSON.parse(r.split_amounts) : undefined,
             })));
           }
         }
 
         // Fetch partner names
-        const { data: settings } = await supabase.from('settings').select('*');
+        const { data: settings, error: settingsError } = await supabase.from('settings').select('*');
+        if (settingsError) throw settingsError;
+        
         if (settings && settings.length > 0) {
+          console.log('Loaded settings from DB');
           const names = { ...DEFAULT_PARTNER_NAMES };
           settings.forEach(s => {
             if (s.key === 'partner1_name') names.partner1 = s.value;
@@ -149,6 +179,7 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
           });
           setPartnerNamesState(names);
         } else {
+          console.log('No settings in DB, seeding default names...');
           // Seed default names
           await supabase.from('settings').insert([
             { key: 'partner1_name', value: DEFAULT_PARTNER_NAMES.partner1 },
@@ -158,8 +189,11 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
 
         // Fetch categories
         try {
-          const { data: dbCategories } = await supabase.from('categories').select('*');
+          const { data: dbCategories, error: categoriesError } = await supabase.from('categories').select('*');
+          if (categoriesError) throw categoriesError;
+          
           if (dbCategories && dbCategories.length > 0) {
+            console.log('Loaded categories from DB:', dbCategories.length);
             setCategories(dbCategories.map(c => ({
               id: c.id,
               category: c.category,
@@ -168,12 +202,16 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
               recommended: Number(c.recommended),
             })));
           } else {
+            console.log('No categories in DB, seeding with defaults...');
             // Seed with default categories
-            const { data: seeded } = await supabase.from('categories').insert(
+            const { data: seeded, error: seedError } = await supabase.from('categories').insert(
               DEFAULT_CATEGORIES.map(({ category, label, icon, recommended }) => ({
                 category, label, icon, recommended
               }))
             ).select();
+            
+            if (seedError) throw seedError;
+            
             if (seeded) {
               setCategories(seeded.map(c => ({
                 id: c.id,
@@ -256,12 +294,19 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
       date: expense.date,
       paid_by: expense.paidBy,
       shared: expense.shared,
+      split_amounts: expense.splitAmounts ? JSON.stringify(expense.splitAmounts) : null,
     }).select().single();
     
     if (data && !error) {
       setExpenses(prev => [...prev, {
-        id: data.id, category: data.category as ExpenseCategory, description: data.description,
-        amount: Number(data.amount), date: data.date, paidBy: data.paid_by as Partner, shared: data.shared,
+        id: data.id, 
+        category: data.category as ExpenseCategory, 
+        description: data.description,
+        amount: Number(data.amount), 
+        date: data.date, 
+        paidBy: data.paid_by as Partner, 
+        shared: data.shared,
+        splitAmounts: data.split_amounts ? JSON.parse(data.split_amounts) : undefined,
       }]);
     }
   }, []);
@@ -404,7 +449,8 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
     const recommendations: CutbackRecommendation[] = alerts
       .filter(a => a.status === 'red' || a.status === 'yellow')
       .map(a => {
-        const config = categories.find(c => c.category === a.category)!;
+        const config = categories.find(c => c.category === a.category);
+        if (!config) return null;
         const suggestedSpend = (config.recommended / 100) * totalIncome;
         const savings = a.spent - suggestedSpend;
         return {
@@ -413,7 +459,7 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
           message: `Reduce ${a.label.toLowerCase()} by €${Math.round(savings)} to stay within the recommended ${config.recommended}% budget.`,
         };
       })
-      .filter(r => r.savings > 0);
+      .filter((r) => r !== null && r.savings > 0) as CutbackRecommendation[];
 
     const previousMonth = {
       totalExpenses: prevMonthExpenses.reduce((s, e) => s + e.amount, 0),

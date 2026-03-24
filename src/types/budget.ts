@@ -22,6 +22,7 @@ export interface Expense {
   date: string;
   paidBy: Partner;
   shared: boolean;
+  splitAmounts?: Record<Partner, number>; // How much each person pays for shared expenses
 }
 
 export interface CategoryBudget {
@@ -83,47 +84,12 @@ export interface SeasonalRecap {
   topChanges: CategoryDelta[];
 }
 
-export interface CategoryBudget {
-  category: ExpenseCategory;
-  recommended: number; // percentage of income
-  label: string;
-  icon: string;
-}
-
 export interface StoredCategory {
   id: string;
   category: string;
   label: string;
   icon: string;
   recommended: number;
-}
-
-export interface BudgetAlert {
-  category: ExpenseCategory;
-  label: string;
-  spent: number;
-  recommended: number;
-  percentage: number;
-  status: 'green' | 'yellow' | 'red';
-}
-
-export interface CutbackRecommendation {
-  category: ExpenseCategory;
-  label: string;
-  currentSpend: number;
-  suggestedSpend: number;
-  savings: number;
-  message: string;
-}
-
-export interface CategoryDelta {
-  category: ExpenseCategory;
-  label: string;
-  icon: string;
-  currentExpenses: number;
-  previousIncome: number;
-  previousExpenses: number;
-  topChanges: CategoryDelta[];
 }
 
 export const DEFAULT_CATEGORIES: CategoryBudget[] = [

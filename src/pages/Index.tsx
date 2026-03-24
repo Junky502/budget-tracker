@@ -9,6 +9,7 @@ import { PartnerView } from '@/components/budget/PartnerView';
 import { AddExpenseDialog } from '@/components/budget/AddExpenseDialog';
 import { SeasonalRecap } from '@/components/budget/SeasonalRecap';
 import { CategoryManager } from '@/components/budget/CategoryManager';
+import { RecentExpenses } from '@/components/budget/RecentExpenses';
 import { motion } from 'framer-motion';
 import { Wallet, ChevronLeft, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
@@ -69,11 +70,36 @@ function Header() {
   );
 }
 
-export default function Index() {
-  return (
-    <BudgetProvider>
+function IndexContent() {
+  const { loading } = useBudget();
+
+  if (loading) {
+    return (
       <div className="min-h-screen bg-background">
-        <Header />
+        <div className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur-md">
+          <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+            <div className="h-10 w-40 animate-pulse rounded-lg bg-muted"></div>
+          </div>
+        </div>
+        <main className="mx-auto max-w-7xl px-6 py-8">
+          <div className="grid gap-6 lg:grid-cols-3">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="h-64 animate-pulse rounded-lg bg-muted"></div>
+            ))}
+          </div>
+          <div className="mt-6 grid gap-6 lg:grid-cols-2">
+            {[...Array(2)].map((_, i) => (
+              <div key={i} className="h-96 animate-pulse rounded-lg bg-muted"></div>
+            ))}
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Header />
 
         {/* Dashboard */}
         <motion.main
@@ -122,6 +148,13 @@ export default function Index() {
           </div>
         </motion.main>
       </div>
+    );
+}
+
+export default function Index() {
+  return (
+    <BudgetProvider>
+      <IndexContent />
     </BudgetProvider>
   );
 }
