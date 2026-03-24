@@ -21,6 +21,9 @@ interface BudgetContextType {
   alerts: BudgetAlert[];
   recommendations: CutbackRecommendation[];
   previousMonth: { totalExpenses: number; expensesByCategory: Record<string, number> };
+  seasonalData: { current: { totalExpenses: number; expensesByCategory: Record<string, number> }; previous: { totalExpenses: number; expensesByCategory: Record<string, number> } };
+  currentMonth: string; // YYYY-MM
+  setCurrentMonth: (month: string) => void;
   loading: boolean;
 }
 
@@ -73,6 +76,10 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [partnerNames, setPartnerNamesState] = useState<Record<Partner, string>>(DEFAULT_PARTNER_NAMES);
   const [loading, setLoading] = useState(true);
+  const [currentMonth, setCurrentMonthState] = useState<string>(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  });
 
   // Load data from Supabase on mount
   useEffect(() => {
@@ -210,22 +217,35 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
+  const setCurrentMonth = useCallback((month: string) => {
+    setCurrentMonthState(month);
+  }, []);
+
   const computed = useMemo(() => {
+    // Filter expenses by current month
+    const currentMonthExpenses = expenses.filter(e => e.date.startsWith(currentMonth));
+    
+    // Get previous month
+    const [year, month] = currentMonth.split('-').map(Number);
+    const prevDate = new Date(year, month - 2, 1); // month is 0-based, so month-2 gives previous month
+    const prevMonthStr = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
+    const prevMonthExpenses = expenses.filter(e => e.date.startsWith(prevMonthStr));
+
     const totalIncome = incomes.reduce((s, i) => s + i.amount, 0);
     const incomeByPartner: Record<Partner, number> = {
       partner1: incomes.filter(i => i.partner === 'partner1').reduce((s, i) => s + i.amount, 0),
       partner2: incomes.filter(i => i.partner === 'partner2').reduce((s, i) => s + i.amount, 0),
     };
-    const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0);
+    const totalExpenses = currentMonthExpenses.reduce((s, e) => s + e.amount, 0);
 
     const expensesByCategory: Record<string, number> = {};
-    expenses.forEach(e => {
+    currentMonthExpenses.forEach(e => {
       expensesByCategory[e.category] = (expensesByCategory[e.category] || 0) + e.amount;
     });
 
     const expensesByPartner: Record<Partner, number> = {
-      partner1: expenses.filter(e => e.paidBy === 'partner1').reduce((s, e) => s + e.amount, 0),
-      partner2: expenses.filter(e => e.paidBy === 'partner2').reduce((s, e) => s + e.amount, 0),
+      partner1: currentMonthExpenses.filter(e => e.paidBy === 'partner1').reduce((s, e) => s + e.amount, 0),
+      partner2: currentMonthExpenses.filter(e => e.paidBy === 'partner2').reduce((s, e) => s + e.amount, 0),
     };
 
     const savingsRate = totalIncome > 0 ? ((totalIncome - totalExpenses) / totalIncome) * 100 : 0;
@@ -262,15 +282,51 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
       .filter(r => r.savings > 0);
 
     const previousMonth = {
-      totalExpenses: Object.values(PREV_MONTH).reduce((s, v) => s + v, 0),
-      expensesByCategory: PREV_MONTH,
+      totalExpenses: prevMonthExpenses.reduce((s, e) => s + e.amount, 0),
+      expensesByCategory: prevMonthExpenses.reduce((acc, e) => {
+        acc[e.category] = (acc[e.category] || 0) + e.amount;
+        return acc;
+      }, {} as Record<string, number>),
     };
 
-    return { totalIncome, incomeByPartner, totalExpenses, expensesByCategory, expensesByPartner, savingsRate, remainingBudget, alerts, recommendations, previousMonth };
-  }, [incomes, expenses]);
+    // Calculate seasonal data (quarters)
+    const getQuarter = (monthStr: string) => {
+      const month = parseInt(monthStr.split('-')[1]);
+      return Math.ceil(month / 3);
+    };
+    const currentQuarter = getQuarter(currentMonth);
+    const currentYear = parseInt(currentMonth.split('-')[0]);
+    const currentQuarterExpenses = expenses.filter(e => {
+      const [y, m] = e.date.split('-').map(Number);
+      return y === currentYear && Math.ceil(m / 3) === currentQuarter;
+    });
+    const prevYearQuarterExpenses = expenses.filter(e => {
+      const [y, m] = e.date.split('-').map(Number);
+      return y === currentYear - 1 && Math.ceil(m / 3) === currentQuarter;
+    });
+
+    const seasonalData = {
+      current: {
+        totalExpenses: currentQuarterExpenses.reduce((s, e) => s + e.amount, 0),
+        expensesByCategory: currentQuarterExpenses.reduce((acc, e) => {
+          acc[e.category] = (acc[e.category] || 0) + e.amount;
+          return acc;
+        }, {} as Record<string, number>),
+      },
+      previous: {
+        totalExpenses: prevYearQuarterExpenses.reduce((s, e) => s + e.amount, 0),
+        expensesByCategory: prevYearQuarterExpenses.reduce((acc, e) => {
+          acc[e.category] = (acc[e.category] || 0) + e.amount;
+          return acc;
+        }, {} as Record<string, number>),
+      },
+    };
+
+    return { totalIncome, incomeByPartner, totalExpenses, expensesByCategory, expensesByPartner, savingsRate, remainingBudget, alerts, recommendations, previousMonth, seasonalData };
+  }, [incomes, expenses, currentMonth]);
 
   return (
-    <BudgetContext.Provider value={{ incomes, expenses, partnerNames, setPartnerNames, addIncome, removeIncome, addExpense, removeExpense, loading, ...computed }}>
+    <BudgetContext.Provider value={{ incomes, expenses, partnerNames, setPartnerNames, addIncome, removeIncome, addExpense, removeExpense, loading, currentMonth, setCurrentMonth, ...computed }}>
       {children}
     </BudgetContext.Provider>
   );

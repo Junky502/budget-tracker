@@ -3,9 +3,10 @@ import { CATEGORY_CONFIG } from '@/types/budget';
 import { Trash2 } from 'lucide-react';
 
 export function RecentExpenses() {
-  const { expenses, partnerNames, removeExpense } = useBudget();
+  const { expenses, partnerNames, removeExpense, currentMonth } = useBudget();
 
-  const sorted = [...expenses].sort((a, b) => b.date.localeCompare(a.date));
+  const currentMonthExpenses = expenses.filter(e => e.date.startsWith(currentMonth));
+  const sorted = [...currentMonthExpenses].sort((a, b) => b.date.localeCompare(a.date));
 
   return (
     <div className="rounded-lg bg-card p-6 shadow-warm">
