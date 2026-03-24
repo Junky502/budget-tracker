@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useMemo, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useMemo, useEffect, useCallback, ReactNode } from 'react';
 import { Income, Expense, Partner, CATEGORY_CONFIG, BudgetAlert, CutbackRecommendation, ExpenseCategory } from '@/types/budget';
+import { supabase } from '@/lib/supabase';
 
 interface BudgetContextType {
   incomes: Income[];
@@ -20,15 +21,10 @@ interface BudgetContextType {
   alerts: BudgetAlert[];
   recommendations: CutbackRecommendation[];
   previousMonth: { totalExpenses: number; expensesByCategory: Record<string, number> };
+  loading: boolean;
 }
 
 const BudgetContext = createContext<BudgetContextType | null>(null);
-
-const STORAGE_KEYS = {
-  incomes: 'hearth-incomes',
-  expenses: 'hearth-expenses',
-  partnerNames: 'hearth-partner-names',
-};
 
 const SAMPLE_INCOMES: Income[] = [
   { id: '1', partner: 'partner1', source: 'Salary', amount: 4200, recurring: true },
@@ -72,40 +68,147 @@ const PREV_MONTH: Record<string, number> = {
   'discretionary': 80, 'home-maintenance': 0, 'education': 0,
 };
 
-function loadFromStorage<T>(key: string, fallback: T): T {
-  try {
-    const stored = localStorage.getItem(key);
-    return stored ? JSON.parse(stored) : fallback;
-  } catch {
-    return fallback;
-  }
-}
-
 export function BudgetProvider({ children }: { children: ReactNode }) {
-  const [incomes, setIncomes] = useState<Income[]>(() => loadFromStorage(STORAGE_KEYS.incomes, SAMPLE_INCOMES));
-  const [expenses, setExpenses] = useState<Expense[]>(() => loadFromStorage(STORAGE_KEYS.expenses, SAMPLE_EXPENSES));
-  const [partnerNames, setPartnerNames] = useState<Record<Partner, string>>(() => loadFromStorage(STORAGE_KEYS.partnerNames, DEFAULT_PARTNER_NAMES));
+  const [incomes, setIncomes] = useState<Income[]>([]);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [partnerNames, setPartnerNamesState] = useState<Record<Partner, string>>(DEFAULT_PARTNER_NAMES);
+  const [loading, setLoading] = useState(true);
 
-  // Persist to localStorage
-  useEffect(() => { localStorage.setItem(STORAGE_KEYS.incomes, JSON.stringify(incomes)); }, [incomes]);
-  useEffect(() => { localStorage.setItem(STORAGE_KEYS.expenses, JSON.stringify(expenses)); }, [expenses]);
-  useEffect(() => { localStorage.setItem(STORAGE_KEYS.partnerNames, JSON.stringify(partnerNames)); }, [partnerNames]);
+  // Load data from Supabase on mount
+  useEffect(() => {
+    async function loadData() {
+      setLoading(true);
+      try {
+        // Fetch incomes
+        const { data: dbIncomes } = await supabase.from('incomes').select('*');
+        if (dbIncomes && dbIncomes.length > 0) {
+          setIncomes(dbIncomes.map(r => ({
+            id: r.id,
+            partner: r.partner as Partner,
+            source: r.source,
+            amount: Number(r.amount),
+            recurring: r.recurring,
+          })));
+        } else {
+          // Seed with sample data
+          const { data: seeded } = await supabase.from('incomes').insert(
+            SAMPLE_INCOMES.map(({ id, ...rest }) => rest)
+          ).select();
+          if (seeded) {
+            setIncomes(seeded.map(r => ({
+              id: r.id, partner: r.partner as Partner, source: r.source,
+              amount: Number(r.amount), recurring: r.recurring,
+            })));
+          }
+        }
 
-  const addIncome = (income: Omit<Income, 'id'>) => {
-    setIncomes(prev => [...prev, { ...income, id: crypto.randomUUID() }]);
-  };
+        // Fetch expenses
+        const { data: dbExpenses } = await supabase.from('expenses').select('*');
+        if (dbExpenses && dbExpenses.length > 0) {
+          setExpenses(dbExpenses.map(r => ({
+            id: r.id,
+            category: r.category as ExpenseCategory,
+            description: r.description,
+            amount: Number(r.amount),
+            date: r.date,
+            paidBy: r.paid_by as Partner,
+            shared: r.shared,
+          })));
+        } else {
+          // Seed with sample data
+          const { data: seeded } = await supabase.from('expenses').insert(
+            SAMPLE_EXPENSES.map(({ id, paidBy, ...rest }) => ({ ...rest, paid_by: paidBy }))
+          ).select();
+          if (seeded) {
+            setExpenses(seeded.map(r => ({
+              id: r.id, category: r.category as ExpenseCategory, description: r.description,
+              amount: Number(r.amount), date: r.date, paidBy: r.paid_by as Partner, shared: r.shared,
+            })));
+          }
+        }
 
-  const removeIncome = (id: string) => {
+        // Fetch partner names
+        const { data: settings } = await supabase.from('settings').select('*');
+        if (settings && settings.length > 0) {
+          const names = { ...DEFAULT_PARTNER_NAMES };
+          settings.forEach(s => {
+            if (s.key === 'partner1_name') names.partner1 = s.value;
+            if (s.key === 'partner2_name') names.partner2 = s.value;
+          });
+          setPartnerNamesState(names);
+        } else {
+          // Seed default names
+          await supabase.from('settings').insert([
+            { key: 'partner1_name', value: DEFAULT_PARTNER_NAMES.partner1 },
+            { key: 'partner2_name', value: DEFAULT_PARTNER_NAMES.partner2 },
+          ]);
+        }
+      } catch (err) {
+        console.error('Failed to load from Supabase, using defaults:', err);
+        setIncomes(SAMPLE_INCOMES);
+        setExpenses(SAMPLE_EXPENSES);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  const addIncome = useCallback(async (income: Omit<Income, 'id'>) => {
+    const { data, error } = await supabase.from('incomes').insert({
+      partner: income.partner,
+      source: income.source,
+      amount: income.amount,
+      recurring: income.recurring,
+    }).select().single();
+    
+    if (data && !error) {
+      setIncomes(prev => [...prev, {
+        id: data.id, partner: data.partner as Partner, source: data.source,
+        amount: Number(data.amount), recurring: data.recurring,
+      }]);
+    }
+  }, []);
+
+  const removeIncome = useCallback(async (id: string) => {
     setIncomes(prev => prev.filter(i => i.id !== id));
-  };
+    await supabase.from('incomes').delete().eq('id', id);
+  }, []);
 
-  const addExpense = (expense: Omit<Expense, 'id'>) => {
-    setExpenses(prev => [...prev, { ...expense, id: crypto.randomUUID() }]);
-  };
+  const addExpense = useCallback(async (expense: Omit<Expense, 'id'>) => {
+    const { data, error } = await supabase.from('expenses').insert({
+      category: expense.category,
+      description: expense.description,
+      amount: expense.amount,
+      date: expense.date,
+      paid_by: expense.paidBy,
+      shared: expense.shared,
+    }).select().single();
+    
+    if (data && !error) {
+      setExpenses(prev => [...prev, {
+        id: data.id, category: data.category as ExpenseCategory, description: data.description,
+        amount: Number(data.amount), date: data.date, paidBy: data.paid_by as Partner, shared: data.shared,
+      }]);
+    }
+  }, []);
 
-  const removeExpense = (id: string) => {
+  const removeExpense = useCallback(async (id: string) => {
     setExpenses(prev => prev.filter(e => e.id !== id));
-  };
+    await supabase.from('expenses').delete().eq('id', id);
+  }, []);
+
+  const setPartnerNames = useCallback(async (names: Record<Partner, string>) => {
+    setPartnerNamesState(names);
+    await supabase.from('settings').upsert(
+      { key: 'partner1_name', value: names.partner1 },
+      { onConflict: 'key' }
+    );
+    await supabase.from('settings').upsert(
+      { key: 'partner2_name', value: names.partner2 },
+      { onConflict: 'key' }
+    );
+  }, []);
 
   const computed = useMemo(() => {
     const totalIncome = incomes.reduce((s, i) => s + i.amount, 0);
@@ -151,11 +254,8 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
         const suggestedSpend = (config.recommended / 100) * totalIncome;
         const savings = a.spent - suggestedSpend;
         return {
-          category: a.category,
-          label: a.label,
-          currentSpend: a.spent,
-          suggestedSpend,
-          savings,
+          category: a.category, label: a.label, currentSpend: a.spent,
+          suggestedSpend, savings,
           message: `Reduce ${a.label.toLowerCase()} by €${Math.round(savings)} to stay within the recommended ${config.recommended}% budget.`,
         };
       })
@@ -170,7 +270,7 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
   }, [incomes, expenses]);
 
   return (
-    <BudgetContext.Provider value={{ incomes, expenses, partnerNames, setPartnerNames, addIncome, removeIncome, addExpense, removeExpense, ...computed }}>
+    <BudgetContext.Provider value={{ incomes, expenses, partnerNames, setPartnerNames, addIncome, removeIncome, addExpense, removeExpense, loading, ...computed }}>
       {children}
     </BudgetContext.Provider>
   );
