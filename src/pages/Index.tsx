@@ -1,4 +1,5 @@
 import { BudgetProvider, useBudget } from '@/context/BudgetContext';
+import { useAuth } from '@/context/AuthContext';
 import { HealthRing } from '@/components/budget/HealthRing';
 import { IncomePanel } from '@/components/budget/IncomePanel';
 import { AlertsPanel } from '@/components/budget/AlertsPanel';
@@ -10,8 +11,9 @@ import { AddExpenseDialog } from '@/components/budget/AddExpenseDialog';
 import { SeasonalRecap } from '@/components/budget/SeasonalRecap';
 import { CategoryManager } from '@/components/budget/CategoryManager';
 import { RecentExpenses } from '@/components/budget/RecentExpenses';
+import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
-import { Wallet, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Wallet, ChevronLeft, ChevronRight, LogOut } from 'lucide-react';
 import { format } from 'date-fns';
 
 const stagger = {
@@ -26,6 +28,7 @@ const fadeUp = {
 
 function Header() {
   const { currentMonth, setCurrentMonth } = useBudget();
+  const { logout } = useAuth();
 
   const changeMonth = (direction: 'prev' | 'next') => {
     const [year, month] = currentMonth.split('-').map(Number);
@@ -64,6 +67,15 @@ function Header() {
         <div className="flex items-center gap-2">
           <CategoryManager />
           <AddExpenseDialog />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={logout}
+            title="Logout"
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <LogOut className="h-4 w-4" />
+          </Button>
         </div>
       </div>
     </header>

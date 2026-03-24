@@ -140,30 +140,8 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
             splitAmounts: r.split_amounts ? JSON.parse(r.split_amounts) : undefined,
           })));
         } else {
-          console.log('No expenses in DB, seeding with sample data...');
-          // Seed with sample data
-          const { data: seeded, error: seedError } = await supabase.from('expenses').insert(
-            SAMPLE_EXPENSES.map(({ id, paidBy, splitAmounts, ...rest }) => ({ 
-              ...rest, 
-              paid_by: paidBy,
-              split_amounts: splitAmounts ? JSON.stringify(splitAmounts) : null,
-            }))
-          ).select();
-          
-          if (seedError) throw seedError;
-          
-          if (seeded) {
-            setExpenses(seeded.map(r => ({
-              id: r.id, 
-              category: r.category as ExpenseCategory, 
-              description: r.description,
-              amount: Number(r.amount), 
-              date: r.date, 
-              paidBy: r.paid_by as Partner, 
-              shared: r.shared,
-              splitAmounts: r.split_amounts ? JSON.parse(r.split_amounts) : undefined,
-            })));
-          }
+          console.log('No expenses in DB');
+          setExpenses([]);
         }
 
         // Fetch partner names
@@ -290,54 +268,26 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
     try {
       console.log('Adding expense:', expense);
       
-      // First try with split_amounts
-      const { data, error } = await supabase.from('expenses').insert({
+      // Build insert object conditionally
+      const insertData: any = {
         category: expense.category,
         description: expense.description,
         amount: expense.amount,
         date: expense.date,
         paid_by: expense.paidBy,
         shared: expense.shared,
-        split_amounts: expense.splitAmounts ? JSON.stringify(expense.splitAmounts) : null,
-      }).select().single();
+      };
+      
+      // Only include split_amounts if it exists
+      if (expense.splitAmounts) {
+        insertData.split_amounts = JSON.stringify(expense.splitAmounts);
+      }
+      
+      const { data, error } = await supabase.from('expenses').insert(insertData).select().single();
       
       if (error) {
         console.error('Error adding expense to Supabase:', error);
-        
-        // If error mentions split_amounts column, try without it (fallback for older schema)
-        if (error.message && error.message.includes('split_amounts')) {
-          console.log('split_amounts column not found, retrying without it...');
-          const { data: data2, error: error2 } = await supabase.from('expenses').insert({
-            category: expense.category,
-            description: expense.description,
-            amount: expense.amount,
-            date: expense.date,
-            paid_by: expense.paidBy,
-            shared: expense.shared,
-          }).select().single();
-          
-          if (error2) {
-            console.error('Error adding expense (fallback):', error2);
-            alert('Error adding expense: ' + (error2.message || 'Unknown error'));
-            return;
-          }
-          
-          if (data2) {
-            console.log('Expense added successfully (fallback):', data2);
-            setExpenses(prev => [...prev, {
-              id: data2.id, 
-              category: data2.category as ExpenseCategory, 
-              description: data2.description,
-              amount: Number(data2.amount), 
-              date: data2.date, 
-              paidBy: data2.paid_by as Partner, 
-              shared: data2.shared,
-              splitAmounts: undefined,
-            }]);
-          }
-        } else {
-          alert('Error adding expense: ' + (error.message || 'Unknown error'));
-        }
+        alert('Error adding expense: ' + (error.message || 'Unknown error'));
         return;
       }
       
