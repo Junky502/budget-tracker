@@ -49,6 +49,40 @@ export interface CutbackRecommendation {
   message: string;
 }
 
+export interface MonthOption {
+  value: string;
+  label: string;
+}
+
+export interface PeriodSnapshot {
+  label: string;
+  totalIncome: number;
+  totalExpenses: number;
+  expensesByCategory: Record<string, number>;
+  hasData: boolean;
+}
+
+export interface CategoryDelta {
+  category: ExpenseCategory;
+  label: string;
+  current: number;
+  previous: number;
+  change: number;
+  changePct: number;
+}
+
+export interface SeasonalRecap {
+  label: string;
+  rangeLabel: string;
+  comparisonLabel: string;
+  hasComparison: boolean;
+  currentIncome: number;
+  currentExpenses: number;
+  previousIncome: number;
+  previousExpenses: number;
+  topChanges: CategoryDelta[];
+}
+
 export const CATEGORY_CONFIG: CategoryBudget[] = [
   { category: 'housing', recommended: 30, label: 'Housing', icon: '🏠' },
   { category: 'utilities', recommended: 5, label: 'Utilities', icon: '💡' },
