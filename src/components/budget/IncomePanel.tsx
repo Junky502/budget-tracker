@@ -46,7 +46,7 @@ export function IncomePanel() {
               <span className="text-xs text-muted-foreground">({partnerNames[inc.partner]})</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="font-mono-data text-sm font-medium text-foreground">€{inc.amount.toLocaleString()}</span>
+              <span className="font-mono-data text-sm font-medium text-foreground">€{inc.amount.toFixed(2)}</span>
               <button
                 onClick={() => removeIncome(inc.id)}
                 className="rounded p-0.5 opacity-0 transition-opacity hover:bg-destructive/10 group-hover:opacity-100"
@@ -61,7 +61,7 @@ export function IncomePanel() {
 
       <div className="mt-4 flex justify-between border-t border-border pt-3">
         <span className="text-sm font-semibold text-foreground">Total</span>
-        <span className="font-mono-data text-lg font-semibold text-foreground">€{totalIncome.toLocaleString()}</span>
+        <span className="font-mono-data text-lg font-semibold text-foreground">€{totalIncome.toFixed(2)}</span>
       </div>
     </div>
   );

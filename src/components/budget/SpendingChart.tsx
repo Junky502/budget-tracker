@@ -31,7 +31,7 @@ export function SpendingChart() {
                 ))}
               </Pie>
               <Tooltip
-                formatter={(value: number) => `€${value.toLocaleString()}`}
+                formatter={(value: number) => `€${value.toFixed(2)}`}
                 contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))', fontSize: '13px', fontFamily: '"JetBrains Mono", monospace' }}
               />
             </PieChart>
@@ -42,7 +42,7 @@ export function SpendingChart() {
             <div key={item.name} className="flex min-w-0 items-center gap-2">
               <span className="inline-block h-2.5 w-2.5 flex-shrink-0 rounded-sm" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
               <span className="truncate text-xs text-muted-foreground">{item.icon} {item.name}</span>
-              <span className="ml-auto flex-shrink-0 font-mono-data text-xs text-foreground">€{item.value}</span>
+              <span className="ml-auto flex-shrink-0 font-mono-data text-xs text-foreground">€{item.value.toFixed(2)}</span>
             </div>
           ))}
         </div>

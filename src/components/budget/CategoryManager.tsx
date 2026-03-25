@@ -3,10 +3,14 @@ import { StoredCategory } from '@/types/budget';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { useState } from 'react';
-import { Plus, Trash2, Edit } from 'lucide-react';
+import { useState, type ReactNode } from 'react';
+import { Trash2, Edit } from 'lucide-react';
 
-export function CategoryManager() {
+interface CategoryManagerProps {
+  trigger?: ReactNode;
+}
+
+export function CategoryManager({ trigger }: CategoryManagerProps) {
   const { categories, addCategory, removeCategory, updateCategory } = useBudget();
   const [isOpen, setIsOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<StoredCategory | null>(null);
@@ -51,11 +55,18 @@ export function CategoryManager() {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if (open) {
+        resetForm();
+      }
+      setIsOpen(open);
+    }}>
       <DialogTrigger asChild>
-        <Button variant="outline" onClick={() => { resetForm(); setIsOpen(true); }}>
-          Manage Categories
-        </Button>
+        {trigger ?? (
+          <Button variant="outline">
+            Manage Categories
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-hidden p-0 sm:max-w-lg">
         <DialogHeader className="px-6 pt-6">

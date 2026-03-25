@@ -25,7 +25,7 @@ export function MonthComparison() {
         <div className="flex items-center gap-1">
           {diff > 0 ? <ArrowUp className="h-4 w-4 text-destructive" /> : diff < 0 ? <ArrowDown className="h-4 w-4 text-primary" /> : <Minus className="h-4 w-4 text-muted-foreground" />}
           <span className={`font-mono-data text-sm font-medium ${diff > 0 ? 'text-destructive' : diff < 0 ? 'text-primary' : 'text-muted-foreground'}`}>
-            {diff > 0 ? '+' : ''}€{Math.round(diff)} ({diffPct > 0 ? '+' : ''}{diffPct.toFixed(1)}%)
+            {diff > 0 ? '+' : ''}€{Math.abs(diff).toFixed(2)} ({diffPct > 0 ? '+' : ''}{diffPct.toFixed(1)}%)
           </span>
         </div>
       </div>
@@ -34,11 +34,11 @@ export function MonthComparison() {
           <div key={c.category} className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">{c.icon} {c.label}</span>
             <div className="flex items-center gap-2">
-              <span className="font-mono-data text-xs text-muted-foreground">€{c.prev}</span>
+              <span className="font-mono-data text-xs text-muted-foreground">€{Number(c.prev).toFixed(2)}</span>
               <span className="text-muted-foreground">→</span>
-              <span className="font-mono-data text-xs text-foreground">€{c.current}</span>
+              <span className="font-mono-data text-xs text-foreground">€{Number(c.current).toFixed(2)}</span>
               <span className={`font-mono-data text-xs ${c.change > 0 ? 'text-destructive' : c.change < 0 ? 'text-primary' : 'text-muted-foreground'}`}>
-                {c.change > 0 ? '+' : ''}{Math.round(c.change)}
+                {c.change > 0 ? '+' : ''}{Number(c.change).toFixed(2)}
               </span>
             </div>
           </div>

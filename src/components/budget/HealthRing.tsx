@@ -37,16 +37,16 @@ export function HealthRing() {
       <div className="grid w-full grid-cols-3 gap-4 text-center">
         <div>
           <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Income</p>
-          <p className="font-mono-data text-lg font-semibold text-foreground">€{totalIncome.toLocaleString()}</p>
+          <p className="font-mono-data text-lg font-semibold text-foreground">€{totalIncome.toFixed(2)}</p>
         </div>
         <div>
           <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Spent</p>
-          <p className="font-mono-data text-lg font-semibold text-foreground">€{totalExpenses.toLocaleString()}</p>
+          <p className="font-mono-data text-lg font-semibold text-foreground">€{totalExpenses.toFixed(2)}</p>
         </div>
         <div>
           <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Left</p>
           <p className="font-mono-data text-lg font-semibold" style={{ color: remainingBudget >= 0 ? 'hsl(var(--success))' : 'hsl(var(--danger))' }}>
-            €{remainingBudget.toLocaleString()}
+            €{remainingBudget.toFixed(2)}
           </p>
         </div>
       </div>

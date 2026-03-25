@@ -33,15 +33,15 @@ export function PartnerView() {
       <div className="mb-6 grid grid-cols-3 gap-3 text-center">
         <div className="rounded-md bg-surface-alt p-3">
           <p className="text-xs text-muted-foreground">Shared</p>
-          <p className="font-mono-data text-base font-semibold text-foreground">€{sharedTotal.toLocaleString()}</p>
+          <p className="font-mono-data text-base font-semibold text-foreground">€{sharedTotal.toFixed(2)}</p>
         </div>
         <div className="rounded-md bg-surface-alt p-3">
           <p className="text-xs text-muted-foreground">{partnerNames.partner1}</p>
-          <p className="font-mono-data text-base font-semibold text-foreground">€{personalP1}</p>
+          <p className="font-mono-data text-base font-semibold text-foreground">€{personalP1.toFixed(2)}</p>
         </div>
         <div className="rounded-md bg-surface-alt p-3">
           <p className="text-xs text-muted-foreground">{partnerNames.partner2}</p>
-          <p className="font-mono-data text-base font-semibold text-foreground">€{personalP2}</p>
+          <p className="font-mono-data text-base font-semibold text-foreground">€{personalP2.toFixed(2)}</p>
         </div>
       </div>
 
@@ -49,9 +49,9 @@ export function PartnerView() {
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={topCategories} barGap={2}>
             <XAxis dataKey="name" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-            <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={v => `€${v}`} />
+            <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={(v: number) => `€${Number(v).toFixed(2)}`} />
             <Tooltip
-              formatter={(value: number) => `€${value}`}
+              formatter={(value: number) => `€${value.toFixed(2)}`}
               contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))', fontSize: '12px' }}
             />
             <Bar dataKey={partnerNames.partner1} fill="hsl(105, 45%, 21%)" radius={[4, 4, 0, 0]} />

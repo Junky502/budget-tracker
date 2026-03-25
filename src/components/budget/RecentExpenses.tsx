@@ -36,7 +36,7 @@ export function RecentExpenses() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <span className="font-mono-data text-sm font-medium text-foreground">€{exp.amount}</span>
+                <span className="font-mono-data text-sm font-medium text-foreground">€{exp.amount.toFixed(2)}</span>
                 <button
                   onClick={() => setEditingExpense(exp)}
                   className="rounded p-0.5 opacity-0 transition-opacity hover:bg-primary/10 group-hover:opacity-100"
