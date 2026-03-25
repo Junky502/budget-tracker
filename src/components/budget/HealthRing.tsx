@@ -12,9 +12,9 @@ export function HealthRing() {
   const healthLabel = clampedRate >= 20 ? 'Healthy' : clampedRate >= 10 ? 'Fair' : 'Tight';
 
   return (
-    <div className="flex flex-col items-center gap-6 rounded-lg bg-card p-8 shadow-warm">
-      <h2 className="text-lg font-semibold tracking-tight text-foreground">Budget Health</h2>
-      <div className="relative">
+    <div className="flex h-full flex-col rounded-lg bg-card p-8 shadow-warm">
+      <h2 className="mb-6 text-center text-lg font-semibold tracking-tight text-foreground">Budget Health</h2>
+      <div className="relative mx-auto flex-shrink-0">
         <svg width="200" height="200" viewBox="0 0 200 200">
           <circle cx="100" cy="100" r="80" fill="none" stroke="hsl(var(--border))" strokeWidth="12" />
           <motion.circle
@@ -34,18 +34,18 @@ export function HealthRing() {
           <span className="text-sm text-muted-foreground">{healthLabel}</span>
         </div>
       </div>
-      <div className="grid w-full grid-cols-3 gap-4 text-center">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Income</p>
-          <p className="font-mono-data text-lg font-semibold text-foreground">€{totalIncome.toFixed(2)}</p>
+      <div className="mt-6 grid w-full grid-cols-3 divide-x divide-border">
+        <div className="min-w-0 px-2 text-center">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Income</p>
+          <p className="font-mono-data text-[11px] font-semibold leading-tight text-foreground break-all">€{totalIncome.toFixed(2)}</p>
         </div>
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Spent</p>
-          <p className="font-mono-data text-lg font-semibold text-foreground">€{totalExpenses.toFixed(2)}</p>
+        <div className="min-w-0 px-2 text-center">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Spent</p>
+          <p className="font-mono-data text-[11px] font-semibold leading-tight text-foreground break-all">€{totalExpenses.toFixed(2)}</p>
         </div>
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Left</p>
-          <p className="font-mono-data text-lg font-semibold" style={{ color: remainingBudget >= 0 ? 'hsl(var(--success))' : 'hsl(var(--danger))' }}>
+        <div className="min-w-0 px-2 text-center">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Left</p>
+          <p className="font-mono-data text-[11px] font-semibold leading-tight break-all" style={{ color: remainingBudget >= 0 ? 'hsl(var(--success))' : 'hsl(var(--danger))' }}>
             €{remainingBudget.toFixed(2)}
           </p>
         </div>

@@ -14,7 +14,6 @@ import { CategoryManager } from '@/components/budget/CategoryManager';
 import { RecentExpenses } from '@/components/budget/RecentExpenses';
 import { GoalsPanel } from '@/components/budget/GoalsPanel';
 import { PaceCheckPanel } from '@/components/budget/PaceCheckPanel';
-import { SettleUpWidget } from '@/components/budget/SettleUpWidget';
 import { BillsCalendar } from '@/components/budget/BillsCalendar';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -219,7 +218,7 @@ function IndexContent() {
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
-            <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-4">
+            <div className="grid gap-6 lg:grid-cols-3">
               <motion.div variants={fadeUp} className="hidden sm:block">
                 <HealthRing />
               </motion.div>
@@ -228,9 +227,6 @@ function IndexContent() {
               </motion.div>
               <motion.div variants={fadeUp}>
                 <GoalsPanel />
-              </motion.div>
-              <motion.div variants={fadeUp}>
-                <AlertsPanel />
               </motion.div>
             </div>
 
@@ -242,14 +238,11 @@ function IndexContent() {
                 <PartnerView />
               </motion.div>
               <motion.div variants={fadeUp}>
-                <SettleUpWidget />
+                <PaceCheckPanel />
               </motion.div>
             </div>
 
-            <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-4">
-              <motion.div variants={fadeUp}>
-                <PaceCheckPanel />
-              </motion.div>
+            <div className="grid gap-6 lg:grid-cols-3">
               <motion.div variants={fadeUp}>
                 <RecommendationsPanel />
               </motion.div>
@@ -261,9 +254,14 @@ function IndexContent() {
               </motion.div>
             </div>
 
-            <motion.div variants={fadeUp}>
-              <RecentExpenses />
-            </motion.div>
+            <div className="grid gap-6 lg:grid-cols-2">
+              <motion.div variants={fadeUp}>
+                <AlertsPanel />
+              </motion.div>
+              <motion.div variants={fadeUp}>
+                <RecentExpenses />
+              </motion.div>
+            </div>
           </TabsContent>
 
           <TabsContent value="calendar">
