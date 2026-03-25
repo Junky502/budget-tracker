@@ -46,7 +46,7 @@ function Header() {
 
   return (
     <header className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur-md">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+      <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
             <Wallet className="h-5 w-5 text-primary-foreground" />
@@ -64,7 +64,7 @@ function Header() {
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:flex-nowrap">
           <CategoryManager />
           <AddExpenseDialog />
           <Button
@@ -89,11 +89,11 @@ function IndexContent() {
     return (
       <div className="min-h-screen bg-background">
         <div className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur-md">
-          <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+          <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6">
             <div className="h-10 w-40 animate-pulse rounded-lg bg-muted"></div>
           </div>
         </div>
-        <main className="mx-auto max-w-7xl px-6 py-8">
+        <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
           <div className="grid gap-6 lg:grid-cols-3">
             {[...Array(3)].map((_, i) => (
               <div key={i} className="h-64 animate-pulse rounded-lg bg-muted"></div>
@@ -118,7 +118,7 @@ function IndexContent() {
           variants={stagger}
           initial="hidden"
           animate="show"
-          className="mx-auto max-w-7xl px-6 py-8"
+          className="mx-auto max-w-7xl px-4 py-8 sm:px-6"
         >
           {/* Top row */}
           <div className="grid gap-6 lg:grid-cols-3">

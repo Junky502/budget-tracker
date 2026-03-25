@@ -21,8 +21,8 @@ export function SpendingChart() {
   return (
     <div className="rounded-lg bg-card p-6 shadow-warm">
       <h2 className="mb-4 text-lg font-semibold text-foreground">Spending Distribution</h2>
-      <div className="flex items-center gap-6">
-        <div className="h-[220px] w-[220px] flex-shrink-0">
+      <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:gap-6">
+        <div className="h-[220px] w-full max-w-[220px] flex-shrink-0">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie data={data} cx="50%" cy="50%" innerRadius={55} outerRadius={95} paddingAngle={2} dataKey="value">
@@ -37,12 +37,12 @@ export function SpendingChart() {
             </PieChart>
           </ResponsiveContainer>
         </div>
-        <div className="flex flex-col gap-1.5 overflow-hidden">
+        <div className="w-full min-w-0 flex flex-col gap-1.5 overflow-hidden">
           {data.slice(0, 7).map((item, i) => (
-            <div key={item.name} className="flex items-center gap-2">
+            <div key={item.name} className="flex min-w-0 items-center gap-2">
               <span className="inline-block h-2.5 w-2.5 flex-shrink-0 rounded-sm" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
               <span className="truncate text-xs text-muted-foreground">{item.icon} {item.name}</span>
-              <span className="ml-auto font-mono-data text-xs text-foreground">€{item.value}</span>
+              <span className="ml-auto flex-shrink-0 font-mono-data text-xs text-foreground">€{item.value}</span>
             </div>
           ))}
         </div>
