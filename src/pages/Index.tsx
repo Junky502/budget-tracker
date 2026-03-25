@@ -1,6 +1,6 @@
 import { BudgetProvider, useBudget } from '@/context/BudgetContext';
 import { useAuth } from '@/context/AuthContext';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { HealthRing } from '@/components/budget/HealthRing';
 import { IncomePanel } from '@/components/budget/IncomePanel';
 import { AlertsPanel } from '@/components/budget/AlertsPanel';
@@ -17,11 +17,13 @@ import { PaceCheckPanel } from '@/components/budget/PaceCheckPanel';
 import { BillsCalendar } from '@/components/budget/BillsCalendar';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { motion } from 'framer-motion';
 import { Wallet, ChevronLeft, ChevronRight, LogOut, CalendarDays, BarChart3, List, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 
-type DashboardTab = 'overview' | 'calendar';
+type DashboardTab = 'calendar' | 'overview' | 'categories';
+const mobileTabOrder: DashboardTab[] = ['calendar', 'overview', 'categories'];
 
 const stagger = {
   hidden: {},
@@ -99,7 +101,60 @@ function Header() {
 function IndexContent() {
   const { loading, currentMonth, setCurrentMonth, savingsRate, totalIncome, totalExpenses, remainingBudget } = useBudget();
   const { logout } = useAuth();
+  const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState<DashboardTab>('overview');
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+
+  useEffect(() => {
+    if (!isMobile && activeTab === 'categories') {
+      setActiveTab('overview');
+    }
+  }, [activeTab, isMobile]);
+
+  const moveTab = (direction: 'prev' | 'next') => {
+    const currentIndex = mobileTabOrder.indexOf(activeTab);
+    if (currentIndex === -1) {
+      return;
+    }
+    const targetIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
+    if (targetIndex < 0 || targetIndex >= mobileTabOrder.length) {
+      return;
+    }
+    setActiveTab(mobileTabOrder[targetIndex]);
+  };
+
+  const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (!isMobile) {
+      return;
+    }
+    const touch = event.changedTouches[0];
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+  };
+
+  const handleTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (!isMobile || !touchStartRef.current) {
+      return;
+    }
+
+    const touch = event.changedTouches[0];
+    const deltaX = touch.clientX - touchStartRef.current.x;
+    const deltaY = touch.clientY - touchStartRef.current.y;
+    touchStartRef.current = null;
+
+    const absX = Math.abs(deltaX);
+    const absY = Math.abs(deltaY);
+    const minSwipeDistance = 50;
+
+    if (absX < minSwipeDistance || absX < absY * 1.2) {
+      return;
+    }
+
+    if (deltaX < 0) {
+      moveTab('next');
+    } else {
+      moveTab('prev');
+    }
+  };
 
   const changeMonth = (direction: 'prev' | 'next') => {
     const [year, month] = currentMonth.split('-').map(Number);
@@ -217,58 +272,82 @@ function IndexContent() {
               <TabsTrigger value="calendar">Calendar</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="space-y-6">
-            <div className="grid gap-6 lg:grid-cols-3">
-              <motion.div variants={fadeUp} className="hidden sm:block">
-                <HealthRing />
-              </motion.div>
-              <motion.div variants={fadeUp}>
-                <IncomePanel />
-              </motion.div>
-              <motion.div variants={fadeUp}>
-                <GoalsPanel />
-              </motion.div>
-            </div>
+          <div className="touch-pan-y" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+            <TabsContent value="overview" className="space-y-6">
+              <div className="grid gap-6 lg:grid-cols-3">
+                <motion.div variants={fadeUp} className="hidden sm:block">
+                  <HealthRing />
+                </motion.div>
+                <motion.div variants={fadeUp}>
+                  <IncomePanel />
+                </motion.div>
+                <motion.div variants={fadeUp}>
+                  <GoalsPanel />
+                </motion.div>
+              </div>
 
-            <div className="grid gap-6 xl:grid-cols-3">
-              <motion.div variants={fadeUp}>
-                <SpendingChart />
-              </motion.div>
-              <motion.div variants={fadeUp}>
-                <PartnerView />
-              </motion.div>
-              <motion.div variants={fadeUp}>
-                <PaceCheckPanel />
-              </motion.div>
-            </div>
+              <div className="grid gap-6 xl:grid-cols-3">
+                <motion.div variants={fadeUp}>
+                  <SpendingChart />
+                </motion.div>
+                <motion.div variants={fadeUp}>
+                  <PartnerView />
+                </motion.div>
+                <motion.div variants={fadeUp}>
+                  <PaceCheckPanel />
+                </motion.div>
+              </div>
 
-            <div className="grid gap-6 lg:grid-cols-3">
-              <motion.div variants={fadeUp}>
-                <RecommendationsPanel />
-              </motion.div>
-              <motion.div variants={fadeUp}>
-                <MonthComparison />
-              </motion.div>
-              <motion.div variants={fadeUp}>
-                <SeasonalRecap />
-              </motion.div>
-            </div>
+              <div className="grid gap-6 lg:grid-cols-3">
+                <motion.div variants={fadeUp}>
+                  <RecommendationsPanel />
+                </motion.div>
+                <motion.div variants={fadeUp}>
+                  <MonthComparison />
+                </motion.div>
+                <motion.div variants={fadeUp}>
+                  <SeasonalRecap />
+                </motion.div>
+              </div>
 
-            <div className="grid gap-6 lg:grid-cols-2">
+              <div className="grid gap-6 lg:grid-cols-2">
+                <motion.div variants={fadeUp}>
+                  <AlertsPanel />
+                </motion.div>
+                <motion.div variants={fadeUp}>
+                  <RecentExpenses />
+                </motion.div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="calendar">
+              <motion.div variants={fadeUp}>
+                <BillsCalendar />
+              </motion.div>
+            </TabsContent>
+
+            <TabsContent value="categories" className="space-y-6">
+              <motion.div variants={fadeUp}>
+                <div className="rounded-lg bg-card p-6 shadow-warm">
+                  <div className="mb-4 flex items-center justify-between">
+                    <h2 className="text-lg font-semibold text-foreground">Manage Categories</h2>
+                    <CategoryManager
+                      trigger={
+                        <Button variant="outline" size="sm">
+                          Open Manager
+                        </Button>
+                      }
+                    />
+                  </div>
+                  <p className="text-sm text-muted-foreground">Review category health below and use the manager to add, edit, or remove categories.</p>
+                </div>
+              </motion.div>
+
               <motion.div variants={fadeUp}>
                 <AlertsPanel />
               </motion.div>
-              <motion.div variants={fadeUp}>
-                <RecentExpenses />
-              </motion.div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="calendar">
-            <motion.div variants={fadeUp}>
-              <BillsCalendar />
-            </motion.div>
-          </TabsContent>
+            </TabsContent>
+          </div>
         </Tabs>
       </motion.main>
 
