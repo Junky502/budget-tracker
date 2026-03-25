@@ -16,6 +16,7 @@ export function AddExpenseDialog() {
   const [amount, setAmount] = useState('');
   const [paidBy, setPaidBy] = useState<Partner>('partner1');
   const [shared, setShared] = useState(true);
+  const [recurring, setRecurring] = useState(false);
   const [partner1Split, setPartner1Split] = useState('');
   const [partner2Split, setPartner2Split] = useState('');
 
@@ -81,6 +82,7 @@ export function AddExpenseDialog() {
       description,
       amount: parseFloat(amount),
       date: new Date().toISOString().split('T')[0],
+      recurring,
       paidBy,
       shared,
     };
@@ -95,6 +97,7 @@ export function AddExpenseDialog() {
     addExpense(expenseData);
     setDescription('');
     setAmount('');
+    setRecurring(false);
     setPartner1Split('');
     setPartner2Split('');
     setOpen(false);
@@ -144,6 +147,10 @@ export function AddExpenseDialog() {
           <div className="flex items-center gap-2">
             <input type="checkbox" checked={shared} onChange={e => setShared(e.target.checked)} className="h-4 w-4 rounded border-border" id="shared" />
             <label htmlFor="shared" className="text-sm text-foreground">Shared expense</label>
+          </div>
+          <div className="flex items-center gap-2">
+            <input type="checkbox" checked={recurring} onChange={e => setRecurring(e.target.checked)} className="h-4 w-4 rounded border-border" id="recurring-expense" />
+            <label htmlFor="recurring-expense" className="text-sm text-foreground">Recurring expense</label>
           </div>
 
           {shared && (

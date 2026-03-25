@@ -1,17 +1,25 @@
 import { useBudget } from '@/context/BudgetContext';
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 
 export function PartnerView() {
-  const { expenses, partnerNames, expensesByPartner, categories } = useBudget();
+  const { expenses, partnerNames, categories, currentMonth } = useBudget();
 
-  const sharedTotal = expenses.filter(e => e.shared).reduce((s, e) => s + e.amount, 0);
-  const personalP1 = expenses.filter(e => !e.shared && e.paidBy === 'partner1').reduce((s, e) => s + e.amount, 0);
-  const personalP2 = expenses.filter(e => !e.shared && e.paidBy === 'partner2').reduce((s, e) => s + e.amount, 0);
+  const currentMonthExpenses = expenses.filter(expense => {
+    const expenseMonth = expense.date.slice(0, 7);
+    if (expense.recurring) {
+      return expenseMonth <= currentMonth;
+    }
+    return expenseMonth === currentMonth;
+  });
+
+  const sharedTotal = currentMonthExpenses.filter(e => e.shared).reduce((s, e) => s + e.amount, 0);
+  const personalP1 = currentMonthExpenses.filter(e => !e.shared && e.paidBy === 'partner1').reduce((s, e) => s + e.amount, 0);
+  const personalP2 = currentMonthExpenses.filter(e => !e.shared && e.paidBy === 'partner2').reduce((s, e) => s + e.amount, 0);
 
   const topCategories = categories
     .map(c => {
-      const p1 = expenses.filter(e => e.category === c.category && e.paidBy === 'partner1').reduce((s, e) => s + e.amount, 0);
-      const p2 = expenses.filter(e => e.category === c.category && e.paidBy === 'partner2').reduce((s, e) => s + e.amount, 0);
+      const p1 = currentMonthExpenses.filter(e => e.category === c.category && e.paidBy === 'partner1').reduce((s, e) => s + e.amount, 0);
+      const p2 = currentMonthExpenses.filter(e => e.category === c.category && e.paidBy === 'partner2').reduce((s, e) => s + e.amount, 0);
       return { name: c.label, [partnerNames.partner1]: p1, [partnerNames.partner2]: p2 };
     })
     .filter(c => (c[partnerNames.partner1] as number) > 0 || (c[partnerNames.partner2] as number) > 0)

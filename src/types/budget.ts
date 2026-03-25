@@ -20,6 +20,7 @@ export interface Expense {
   description: string;
   amount: number;
   date: string;
+  recurring: boolean;
   paidBy: Partner;
   shared: boolean;
   splitAmounts?: Record<Partner, number>; // How much each person pays for shared expenses

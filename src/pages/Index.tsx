@@ -52,7 +52,7 @@ function Header() {
             <Wallet className="h-5 w-5 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="text-xl font-semibold tracking-tight text-foreground">Hearth</h1>
+            <h1 className="text-xl font-semibold tracking-tight text-foreground">Budget</h1>
             <div className="flex items-center gap-2">
               <button onClick={() => changeMonth('prev')} className="text-xs text-muted-foreground hover:text-foreground">
                 <ChevronLeft className="h-4 w-4" />

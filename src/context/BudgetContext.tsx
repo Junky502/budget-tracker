@@ -40,26 +40,26 @@ const SAMPLE_INCOMES: Income[] = [
 ];
 
 const SAMPLE_EXPENSES: Expense[] = [
-  { id: '1', category: 'housing', description: 'Rent', amount: 1800, date: '2026-03-01', paidBy: 'partner1', shared: true, splitAmounts: { partner1: 900, partner2: 900 } },
-  { id: '2', category: 'utilities', description: 'Electricity', amount: 120, date: '2026-03-03', paidBy: 'partner2', shared: true, splitAmounts: { partner1: 60, partner2: 60 } },
-  { id: '3', category: 'groceries', description: 'Weekly shop', amount: 185, date: '2026-03-05', paidBy: 'partner1', shared: true, splitAmounts: { partner1: 92.5, partner2: 92.5 } },
-  { id: '4', category: 'groceries', description: 'Farmers market', amount: 65, date: '2026-03-12', paidBy: 'partner2', shared: true, splitAmounts: { partner1: 32.5, partner2: 32.5 } },
-  { id: '5', category: 'dining-out', description: 'Sushi dinner', amount: 95, date: '2026-03-07', paidBy: 'partner1', shared: true, splitAmounts: { partner1: 47.5, partner2: 47.5 } },
-  { id: '6', category: 'dining-out', description: 'Brunch', amount: 48, date: '2026-03-14', paidBy: 'partner2', shared: true, splitAmounts: { partner1: 24, partner2: 24 } },
-  { id: '7', category: 'dining-out', description: 'Pizza night', amount: 42, date: '2026-03-20', paidBy: 'partner1', shared: true, splitAmounts: { partner1: 21, partner2: 21 } },
-  { id: '8', category: 'entertainment', description: 'Cinema', amount: 32, date: '2026-03-08', paidBy: 'partner2', shared: true, splitAmounts: { partner1: 16, partner2: 16 } },
-  { id: '9', category: 'entertainment', description: 'Concert tickets', amount: 150, date: '2026-03-15', paidBy: 'partner1', shared: true, splitAmounts: { partner1: 75, partner2: 75 } },
-  { id: '10', category: 'transportation', description: 'Metro pass', amount: 80, date: '2026-03-01', paidBy: 'partner1', shared: false },
-  { id: '11', category: 'transportation', description: 'Metro pass', amount: 80, date: '2026-03-01', paidBy: 'partner2', shared: false },
-  { id: '12', category: 'healthcare', description: 'Pharmacy', amount: 35, date: '2026-03-10', paidBy: 'partner1', shared: false },
-  { id: '13', category: 'subscriptions', description: 'Streaming', amount: 45, date: '2026-03-01', paidBy: 'partner1', shared: true, splitAmounts: { partner1: 22.5, partner2: 22.5 } },
-  { id: '14', category: 'personal-care', description: 'Haircut', amount: 55, date: '2026-03-11', paidBy: 'partner2', shared: false },
-  { id: '15', category: 'clothing', description: 'New shoes', amount: 120, date: '2026-03-18', paidBy: 'partner1', shared: false },
-  { id: '16', category: 'savings', description: 'Emergency fund', amount: 500, date: '2026-03-01', paidBy: 'partner1', shared: true, splitAmounts: { partner1: 250, partner2: 250 } },
-  { id: '17', category: 'insurance', description: 'Health insurance', amount: 280, date: '2026-03-01', paidBy: 'partner2', shared: true, splitAmounts: { partner1: 140, partner2: 140 } },
-  { id: '18', category: 'pets', description: 'Dog food', amount: 60, date: '2026-03-06', paidBy: 'partner2', shared: true, splitAmounts: { partner1: 30, partner2: 30 } },
-  { id: '19', category: 'gifts', description: 'Birthday gift', amount: 75, date: '2026-03-22', paidBy: 'partner1', shared: false },
-  { id: '20', category: 'discretionary', description: 'Book', amount: 25, date: '2026-03-09', paidBy: 'partner2', shared: false },
+  { id: '1', category: 'housing', description: 'Rent', amount: 1800, date: '2026-03-01', recurring: false, paidBy: 'partner1', shared: true, splitAmounts: { partner1: 900, partner2: 900 } },
+  { id: '2', category: 'utilities', description: 'Electricity', amount: 120, date: '2026-03-03', recurring: false, paidBy: 'partner2', shared: true, splitAmounts: { partner1: 60, partner2: 60 } },
+  { id: '3', category: 'groceries', description: 'Weekly shop', amount: 185, date: '2026-03-05', recurring: false, paidBy: 'partner1', shared: true, splitAmounts: { partner1: 92.5, partner2: 92.5 } },
+  { id: '4', category: 'groceries', description: 'Farmers market', amount: 65, date: '2026-03-12', recurring: false, paidBy: 'partner2', shared: true, splitAmounts: { partner1: 32.5, partner2: 32.5 } },
+  { id: '5', category: 'dining-out', description: 'Sushi dinner', amount: 95, date: '2026-03-07', recurring: false, paidBy: 'partner1', shared: true, splitAmounts: { partner1: 47.5, partner2: 47.5 } },
+  { id: '6', category: 'dining-out', description: 'Brunch', amount: 48, date: '2026-03-14', recurring: false, paidBy: 'partner2', shared: true, splitAmounts: { partner1: 24, partner2: 24 } },
+  { id: '7', category: 'dining-out', description: 'Pizza night', amount: 42, date: '2026-03-20', recurring: false, paidBy: 'partner1', shared: true, splitAmounts: { partner1: 21, partner2: 21 } },
+  { id: '8', category: 'entertainment', description: 'Cinema', amount: 32, date: '2026-03-08', recurring: false, paidBy: 'partner2', shared: true, splitAmounts: { partner1: 16, partner2: 16 } },
+  { id: '9', category: 'entertainment', description: 'Concert tickets', amount: 150, date: '2026-03-15', recurring: false, paidBy: 'partner1', shared: true, splitAmounts: { partner1: 75, partner2: 75 } },
+  { id: '10', category: 'transportation', description: 'Metro pass', amount: 80, date: '2026-03-01', recurring: false, paidBy: 'partner1', shared: false },
+  { id: '11', category: 'transportation', description: 'Metro pass', amount: 80, date: '2026-03-01', recurring: false, paidBy: 'partner2', shared: false },
+  { id: '12', category: 'healthcare', description: 'Pharmacy', amount: 35, date: '2026-03-10', recurring: false, paidBy: 'partner1', shared: false },
+  { id: '13', category: 'subscriptions', description: 'Streaming', amount: 45, date: '2026-03-01', recurring: false, paidBy: 'partner1', shared: true, splitAmounts: { partner1: 22.5, partner2: 22.5 } },
+  { id: '14', category: 'personal-care', description: 'Haircut', amount: 55, date: '2026-03-11', recurring: false, paidBy: 'partner2', shared: false },
+  { id: '15', category: 'clothing', description: 'New shoes', amount: 120, date: '2026-03-18', recurring: false, paidBy: 'partner1', shared: false },
+  { id: '16', category: 'savings', description: 'Emergency fund', amount: 500, date: '2026-03-01', recurring: false, paidBy: 'partner1', shared: true, splitAmounts: { partner1: 250, partner2: 250 } },
+  { id: '17', category: 'insurance', description: 'Health insurance', amount: 280, date: '2026-03-01', recurring: false, paidBy: 'partner2', shared: true, splitAmounts: { partner1: 140, partner2: 140 } },
+  { id: '18', category: 'pets', description: 'Dog food', amount: 60, date: '2026-03-06', recurring: false, paidBy: 'partner2', shared: true, splitAmounts: { partner1: 30, partner2: 30 } },
+  { id: '19', category: 'gifts', description: 'Birthday gift', amount: 75, date: '2026-03-22', recurring: false, paidBy: 'partner1', shared: false },
+  { id: '20', category: 'discretionary', description: 'Book', amount: 25, date: '2026-03-09', recurring: false, paidBy: 'partner2', shared: false },
 ];
 
 const DEFAULT_PARTNER_NAMES: Record<Partner, string> = {
@@ -135,6 +135,7 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
             description: r.description,
             amount: Number(r.amount),
             date: r.date,
+            recurring: Boolean(r.recurring),
             paidBy: r.paid_by as Partner,
             shared: r.shared,
             splitAmounts: r.split_amounts ? JSON.parse(r.split_amounts) : undefined,
@@ -274,6 +275,7 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
         description: expense.description,
         amount: expense.amount,
         date: expense.date,
+        recurring: Boolean(expense.recurring),
         paid_by: expense.paidBy,
         shared: expense.shared,
       };
@@ -299,6 +301,7 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
           description: data.description,
           amount: Number(data.amount), 
           date: data.date, 
+          recurring: Boolean(data.recurring),
           paidBy: data.paid_by as Partner, 
           shared: data.shared,
           splitAmounts: data.split_amounts ? JSON.parse(data.split_amounts) : undefined,
@@ -400,14 +403,39 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const computed = useMemo(() => {
-    // Filter expenses by current month
-    const currentMonthExpenses = expenses.filter(e => e.date.startsWith(currentMonth));
+    const expenseAppliesToMonth = (expense: Expense, month: string) => {
+      const expenseMonth = expense.date.slice(0, 7);
+      if (expense.recurring) {
+        return expenseMonth <= month;
+      }
+      return expenseMonth === month;
+    };
+
+    const aggregateForMonths = (months: string[]) => {
+      const totalsByCategory: Record<string, number> = {};
+      let total = 0;
+
+      months.forEach(month => {
+        expenses.forEach(expense => {
+          if (!expenseAppliesToMonth(expense, month)) {
+            return;
+          }
+          total += expense.amount;
+          totalsByCategory[expense.category] = (totalsByCategory[expense.category] || 0) + expense.amount;
+        });
+      });
+
+      return { total, totalsByCategory };
+    };
+
+    // Filter expenses by current month, including recurring expenses from their start month onward.
+    const currentMonthExpenses = expenses.filter(e => expenseAppliesToMonth(e, currentMonth));
     
     // Get previous month
     const [year, month] = currentMonth.split('-').map(Number);
     const prevDate = new Date(year, month - 2, 1); // month is 0-based, so month-2 gives previous month
     const prevMonthStr = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
-    const prevMonthExpenses = expenses.filter(e => e.date.startsWith(prevMonthStr));
+    const prevMonthExpenses = expenses.filter(e => expenseAppliesToMonth(e, prevMonthStr));
 
     const totalIncome = incomes.reduce((s, i) => s + i.amount, 0);
     const incomeByPartner: Record<Partner, number> = {
@@ -475,29 +503,23 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
     };
     const currentQuarter = getQuarter(currentMonth);
     const currentYear = parseInt(currentMonth.split('-')[0]);
-    const currentQuarterExpenses = expenses.filter(e => {
-      const [y, m] = e.date.split('-').map(Number);
-      return y === currentYear && Math.ceil(m / 3) === currentQuarter;
+    const quarterMonths = [1, 2, 3].map(offset => {
+      const monthNum = (currentQuarter - 1) * 3 + offset;
+      return `${currentYear}-${String(monthNum).padStart(2, '0')}`;
     });
-    const prevYearQuarterExpenses = expenses.filter(e => {
-      const [y, m] = e.date.split('-').map(Number);
-      return y === currentYear - 1 && Math.ceil(m / 3) === currentQuarter;
-    });
+    const previousYearQuarterMonths = quarterMonths.map(monthStr => `${currentYear - 1}-${monthStr.split('-')[1]}`);
+
+    const currentQuarterAgg = aggregateForMonths(quarterMonths);
+    const previousQuarterAgg = aggregateForMonths(previousYearQuarterMonths);
 
     const seasonalData = {
       current: {
-        totalExpenses: currentQuarterExpenses.reduce((s, e) => s + e.amount, 0),
-        expensesByCategory: currentQuarterExpenses.reduce((acc, e) => {
-          acc[e.category] = (acc[e.category] || 0) + e.amount;
-          return acc;
-        }, {} as Record<string, number>),
+        totalExpenses: currentQuarterAgg.total,
+        expensesByCategory: currentQuarterAgg.totalsByCategory,
       },
       previous: {
-        totalExpenses: prevYearQuarterExpenses.reduce((s, e) => s + e.amount, 0),
-        expensesByCategory: prevYearQuarterExpenses.reduce((acc, e) => {
-          acc[e.category] = (acc[e.category] || 0) + e.amount;
-          return acc;
-        }, {} as Record<string, number>),
+        totalExpenses: previousQuarterAgg.total,
+        expensesByCategory: previousQuarterAgg.totalsByCategory,
       },
     };
 
