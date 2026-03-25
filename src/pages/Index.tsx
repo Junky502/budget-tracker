@@ -7,11 +7,16 @@ import { RecommendationsPanel } from '@/components/budget/RecommendationsPanel';
 import { SpendingChart } from '@/components/budget/SpendingChart';
 import { MonthComparison } from '@/components/budget/MonthComparison';
 import { PartnerView } from '@/components/budget/PartnerView';
-import { AddExpenseDialog } from '@/components/budget/AddExpenseDialog';
+import { ExpenseDialog } from '@/components/budget/ExpenseDialog';
 import { SeasonalRecap } from '@/components/budget/SeasonalRecap';
 import { CategoryManager } from '@/components/budget/CategoryManager';
 import { RecentExpenses } from '@/components/budget/RecentExpenses';
+import { GoalsPanel } from '@/components/budget/GoalsPanel';
+import { PaceCheckPanel } from '@/components/budget/PaceCheckPanel';
+import { SettleUpWidget } from '@/components/budget/SettleUpWidget';
+import { BillsCalendar } from '@/components/budget/BillsCalendar';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { motion } from 'framer-motion';
 import { Wallet, ChevronLeft, ChevronRight, LogOut } from 'lucide-react';
 import { format } from 'date-fns';
@@ -66,7 +71,14 @@ function Header() {
         </div>
         <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:flex-nowrap">
           <CategoryManager />
-          <AddExpenseDialog />
+          <ExpenseDialog
+            mode="add"
+            trigger={
+              <Button className="gap-2">
+                Add Expense
+              </Button>
+            }
+          />
           <Button
             variant="ghost"
             size="sm"
@@ -120,44 +132,66 @@ function IndexContent() {
           animate="show"
           className="mx-auto max-w-7xl px-4 py-8 sm:px-6"
         >
-          {/* Top row */}
-          <div className="grid gap-6 lg:grid-cols-3">
-            <motion.div variants={fadeUp}>
-              <HealthRing />
-            </motion.div>
-            <motion.div variants={fadeUp}>
-              <IncomePanel />
-            </motion.div>
-            <motion.div variants={fadeUp}>
-              <AlertsPanel />
-            </motion.div>
-          </div>
+          <Tabs defaultValue="overview" className="space-y-6">
+            <TabsList className="grid w-full max-w-sm grid-cols-2">
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="calendar">Calendar</TabsTrigger>
+            </TabsList>
 
-          {/* Charts row */}
-          <div className="mt-6 grid gap-6 lg:grid-cols-2">
-            <motion.div variants={fadeUp}>
-              <SpendingChart />
-            </motion.div>
-            <motion.div variants={fadeUp}>
-              <PartnerView />
-            </motion.div>
-          </div>
+            <TabsContent value="overview" className="space-y-6">
+              <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-4">
+                <motion.div variants={fadeUp}>
+                  <HealthRing />
+                </motion.div>
+                <motion.div variants={fadeUp}>
+                  <IncomePanel />
+                </motion.div>
+                <motion.div variants={fadeUp}>
+                  <GoalsPanel />
+                </motion.div>
+                <motion.div variants={fadeUp}>
+                  <AlertsPanel />
+                </motion.div>
+              </div>
 
-          {/* Bottom row */}
-          <div className="mt-6 grid gap-6 lg:grid-cols-4">
-            <motion.div variants={fadeUp}>
-              <RecommendationsPanel />
-            </motion.div>
-            <motion.div variants={fadeUp}>
-              <MonthComparison />
-            </motion.div>
-            <motion.div variants={fadeUp}>
-              <SeasonalRecap />
-            </motion.div>
-            <motion.div variants={fadeUp}>
-              <RecentExpenses />
-            </motion.div>
-          </div>
+              <div className="grid gap-6 xl:grid-cols-3">
+                <motion.div variants={fadeUp}>
+                  <SpendingChart />
+                </motion.div>
+                <motion.div variants={fadeUp}>
+                  <PartnerView />
+                </motion.div>
+                <motion.div variants={fadeUp}>
+                  <SettleUpWidget />
+                </motion.div>
+              </div>
+
+              <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-4">
+                <motion.div variants={fadeUp}>
+                  <PaceCheckPanel />
+                </motion.div>
+                <motion.div variants={fadeUp}>
+                  <RecommendationsPanel />
+                </motion.div>
+                <motion.div variants={fadeUp}>
+                  <MonthComparison />
+                </motion.div>
+                <motion.div variants={fadeUp}>
+                  <SeasonalRecap />
+                </motion.div>
+              </div>
+
+              <motion.div variants={fadeUp}>
+                <RecentExpenses />
+              </motion.div>
+            </TabsContent>
+
+            <TabsContent value="calendar">
+              <motion.div variants={fadeUp}>
+                <BillsCalendar />
+              </motion.div>
+            </TabsContent>
+          </Tabs>
         </motion.main>
       </div>
     );

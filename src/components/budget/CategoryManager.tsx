@@ -57,10 +57,11 @@ export function CategoryManager() {
           Manage Categories
         </Button>
       </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
+      <DialogContent className="max-h-[90vh] overflow-hidden p-0 sm:max-w-lg">
+        <DialogHeader className="px-6 pt-6">
           <DialogTitle>{editingCategory ? 'Edit Category' : 'Add Category'}</DialogTitle>
         </DialogHeader>
+        <div className="overflow-y-auto px-6 pb-6">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="mb-1 block text-xs font-semibold uppercase tracking-widest text-muted-foreground">Category Key</label>
@@ -103,7 +104,7 @@ export function CategoryManager() {
             {editingCategory ? 'Update Category' : 'Add Category'}
           </Button>
         </form>
-        <div className="space-y-2 mt-6">
+        <div className="mt-6 space-y-2 max-h-[45vh] overflow-y-auto pr-1">
           {categories.map(category => (
             <div key={category.id} className="flex items-center justify-between rounded-md border px-3 py-2">
               <div className="flex items-center gap-2">
@@ -121,6 +122,7 @@ export function CategoryManager() {
               </div>
             </div>
           ))}
+        </div>
         </div>
       </DialogContent>
     </Dialog>

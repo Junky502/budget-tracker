@@ -51,6 +51,34 @@ export interface CutbackRecommendation {
   message: string;
 }
 
+export type GoalTargetType = 'fixed' | 'percentage';
+
+export interface BudgetGoal {
+  id: string;
+  category: ExpenseCategory;
+  targetType: GoalTargetType;
+  value: number;
+  startMonth: string;
+}
+
+export interface GoalProgress {
+  id: string;
+  category: ExpenseCategory;
+  label: string;
+  icon: string;
+  targetType: GoalTargetType;
+  configuredValue: number;
+  targetAmount: number;
+  currentAmount: number;
+  progressPct: number;
+  expectedByNow: number;
+  variance: number;
+  daysElapsed: number;
+  daysInMonth: number;
+  status: 'on-track' | 'at-risk' | 'exceeded';
+  isCurrentMonth: boolean;
+}
+
 export interface MonthOption {
   value: string;
   label: string;

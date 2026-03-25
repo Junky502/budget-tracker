@@ -47,6 +47,10 @@ INSERT INTO categories (category, label, icon, recommended) VALUES
   ('discretionary', 'Discretionary', '✨', 5);
 ```
 
-### Fallback Behavior
+### Startup Behavior
 
-The app includes localStorage fallbacks for all data when Supabase is unavailable, so it will work even without a database connection.
+The app now treats Supabase as the required source of truth on startup:
+
+- It does not auto-seed sample or default records from the client.
+- Empty tables stay empty.
+- If startup loading fails, the UI shows sentinel records (`Salary 404` and `SUPABASE`) so failures are visible immediately.

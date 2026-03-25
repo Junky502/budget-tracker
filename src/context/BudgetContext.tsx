@@ -1,21 +1,29 @@
 import React, { createContext, useContext, useState, useMemo, useEffect, useCallback, ReactNode } from 'react';
-import { Income, Expense, Partner, BudgetAlert, CutbackRecommendation, ExpenseCategory, StoredCategory, DEFAULT_CATEGORIES } from '@/types/budget';
+import { Income, Expense, Partner, BudgetAlert, CutbackRecommendation, ExpenseCategory, StoredCategory, BudgetGoal, GoalProgress } from '@/types/budget';
 import { supabase } from '@/lib/supabase';
+import { getCurrentMonthKey, parseMonthKey } from '@/lib/periods';
 
 interface BudgetContextType {
   incomes: Income[];
   expenses: Expense[];
+  goals: BudgetGoal[];
   partnerNames: Record<Partner, string>;
-  setPartnerNames: (names: Record<Partner, string>) => void;
-  addIncome: (income: Omit<Income, 'id'>) => void;
-  removeIncome: (id: string) => void;
-  addExpense: (expense: Omit<Expense, 'id'>) => void;
-  removeExpense: (id: string) => void;
+  setPartnerNames: (names: Record<Partner, string>) => Promise<void>;
+  addIncome: (income: Omit<Income, 'id'>) => Promise<void>;
+  removeIncome: (id: string) => Promise<void>;
+  addExpense: (expense: Omit<Expense, 'id'>) => Promise<void>;
+  updateExpense: (id: string, expense: Omit<Expense, 'id'>) => Promise<void>;
+  removeExpense: (id: string) => Promise<void>;
+  addGoal: (goal: Omit<BudgetGoal, 'id'>) => Promise<void>;
+  updateGoal: (id: string, updates: Partial<Omit<BudgetGoal, 'id'>>) => Promise<void>;
+  removeGoal: (id: string) => Promise<void>;
   totalIncome: number;
   incomeByPartner: Record<Partner, number>;
   totalExpenses: number;
   expensesByCategory: Record<string, number>;
   expensesByPartner: Record<Partner, number>;
+  goalProgress: GoalProgress[];
+  pacingAlerts: GoalProgress[];
   savingsRate: number;
   remainingBudget: number;
   alerts: BudgetAlert[];
@@ -25,59 +33,42 @@ interface BudgetContextType {
   currentMonth: string; // YYYY-MM
   setCurrentMonth: (month: string) => void;
   categories: StoredCategory[];
-  addCategory: (category: Omit<StoredCategory, 'id'>) => void;
-  removeCategory: (id: string) => void;
-  updateCategory: (id: string, updates: Partial<StoredCategory>) => void;
+  addCategory: (category: Omit<StoredCategory, 'id'>) => Promise<void>;
+  removeCategory: (id: string) => Promise<void>;
+  updateCategory: (id: string, updates: Partial<StoredCategory>) => Promise<void>;
   loading: boolean;
 }
 
 const BudgetContext = createContext<BudgetContextType | null>(null);
 
-const SAMPLE_INCOMES: Income[] = [
-  { id: '1', partner: 'partner1', source: 'Salary', amount: 4200, recurring: true },
-  { id: '2', partner: 'partner2', source: 'Salary', amount: 3800, recurring: true },
-  { id: '3', partner: 'partner1', source: 'Freelance', amount: 600, recurring: false },
-];
+const SUPABASE_ERROR_INCOME: Income = {
+  id: 'supabase-error-income',
+  partner: 'partner1',
+  source: 'Salary 404',
+  amount: 0,
+  recurring: false,
+};
 
-const SAMPLE_EXPENSES: Expense[] = [
-  { id: '1', category: 'housing', description: 'Rent', amount: 1800, date: '2026-03-01', recurring: false, paidBy: 'partner1', shared: true, splitAmounts: { partner1: 900, partner2: 900 } },
-  { id: '2', category: 'utilities', description: 'Electricity', amount: 120, date: '2026-03-03', recurring: false, paidBy: 'partner2', shared: true, splitAmounts: { partner1: 60, partner2: 60 } },
-  { id: '3', category: 'groceries', description: 'Weekly shop', amount: 185, date: '2026-03-05', recurring: false, paidBy: 'partner1', shared: true, splitAmounts: { partner1: 92.5, partner2: 92.5 } },
-  { id: '4', category: 'groceries', description: 'Farmers market', amount: 65, date: '2026-03-12', recurring: false, paidBy: 'partner2', shared: true, splitAmounts: { partner1: 32.5, partner2: 32.5 } },
-  { id: '5', category: 'dining-out', description: 'Sushi dinner', amount: 95, date: '2026-03-07', recurring: false, paidBy: 'partner1', shared: true, splitAmounts: { partner1: 47.5, partner2: 47.5 } },
-  { id: '6', category: 'dining-out', description: 'Brunch', amount: 48, date: '2026-03-14', recurring: false, paidBy: 'partner2', shared: true, splitAmounts: { partner1: 24, partner2: 24 } },
-  { id: '7', category: 'dining-out', description: 'Pizza night', amount: 42, date: '2026-03-20', recurring: false, paidBy: 'partner1', shared: true, splitAmounts: { partner1: 21, partner2: 21 } },
-  { id: '8', category: 'entertainment', description: 'Cinema', amount: 32, date: '2026-03-08', recurring: false, paidBy: 'partner2', shared: true, splitAmounts: { partner1: 16, partner2: 16 } },
-  { id: '9', category: 'entertainment', description: 'Concert tickets', amount: 150, date: '2026-03-15', recurring: false, paidBy: 'partner1', shared: true, splitAmounts: { partner1: 75, partner2: 75 } },
-  { id: '10', category: 'transportation', description: 'Metro pass', amount: 80, date: '2026-03-01', recurring: false, paidBy: 'partner1', shared: false },
-  { id: '11', category: 'transportation', description: 'Metro pass', amount: 80, date: '2026-03-01', recurring: false, paidBy: 'partner2', shared: false },
-  { id: '12', category: 'healthcare', description: 'Pharmacy', amount: 35, date: '2026-03-10', recurring: false, paidBy: 'partner1', shared: false },
-  { id: '13', category: 'subscriptions', description: 'Streaming', amount: 45, date: '2026-03-01', recurring: false, paidBy: 'partner1', shared: true, splitAmounts: { partner1: 22.5, partner2: 22.5 } },
-  { id: '14', category: 'personal-care', description: 'Haircut', amount: 55, date: '2026-03-11', recurring: false, paidBy: 'partner2', shared: false },
-  { id: '15', category: 'clothing', description: 'New shoes', amount: 120, date: '2026-03-18', recurring: false, paidBy: 'partner1', shared: false },
-  { id: '16', category: 'savings', description: 'Emergency fund', amount: 500, date: '2026-03-01', recurring: false, paidBy: 'partner1', shared: true, splitAmounts: { partner1: 250, partner2: 250 } },
-  { id: '17', category: 'insurance', description: 'Health insurance', amount: 280, date: '2026-03-01', recurring: false, paidBy: 'partner2', shared: true, splitAmounts: { partner1: 140, partner2: 140 } },
-  { id: '18', category: 'pets', description: 'Dog food', amount: 60, date: '2026-03-06', recurring: false, paidBy: 'partner2', shared: true, splitAmounts: { partner1: 30, partner2: 30 } },
-  { id: '19', category: 'gifts', description: 'Birthday gift', amount: 75, date: '2026-03-22', recurring: false, paidBy: 'partner1', shared: false },
-  { id: '20', category: 'discretionary', description: 'Book', amount: 25, date: '2026-03-09', recurring: false, paidBy: 'partner2', shared: false },
-];
+const supabaseErrorExpense = (): Expense => ({
+  id: 'supabase-error-expense',
+  category: 'discretionary',
+  description: 'SUPABASE',
+  amount: 0,
+  date: `${getCurrentMonthKey()}-01`,
+  recurring: false,
+  paidBy: 'partner1',
+  shared: false,
+});
 
 const DEFAULT_PARTNER_NAMES: Record<Partner, string> = {
   partner1: 'Mārtiņš',
   partner2: 'Marta',
 };
 
-const PREV_MONTH: Record<string, number> = {
-  'housing': 1800, 'utilities': 95, 'groceries': 220, 'dining-out': 120,
-  'entertainment': 100, 'transportation': 160, 'healthcare': 40,
-  'subscriptions': 45, 'personal-care': 30, 'clothing': 60,
-  'savings': 500, 'insurance': 280, 'pets': 55, 'gifts': 0,
-  'discretionary': 80, 'home-maintenance': 0, 'education': 0,
-};
-
 export function BudgetProvider({ children }: { children: ReactNode }) {
   const [incomes, setIncomes] = useState<Income[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [goals, setGoals] = useState<BudgetGoal[]>([]);
   const [partnerNames, setPartnerNamesState] = useState<Record<Partner, string>>(DEFAULT_PARTNER_NAMES);
   const [loading, setLoading] = useState(true);
   const [currentMonth, setCurrentMonthState] = useState<string>(() => {
@@ -107,20 +98,8 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
             recurring: r.recurring,
           })));
         } else {
-          console.log('No incomes in DB, seeding with sample data...');
-          // Seed with sample data
-          const { data: seeded, error: seedError } = await supabase.from('incomes').insert(
-            SAMPLE_INCOMES.map(({ id, ...rest }) => rest)
-          ).select();
-          
-          if (seedError) throw seedError;
-          
-          if (seeded) {
-            setIncomes(seeded.map(r => ({
-              id: r.id, partner: r.partner as Partner, source: r.source,
-              amount: Number(r.amount), recurring: r.recurring,
-            })));
-          }
+          console.log('No incomes in DB');
+          setIncomes([]);
         }
 
         // Fetch expenses
@@ -158,85 +137,52 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
           });
           setPartnerNamesState(names);
         } else {
-          console.log('No settings in DB, seeding default names...');
-          // Seed default names
-          await supabase.from('settings').insert([
-            { key: 'partner1_name', value: DEFAULT_PARTNER_NAMES.partner1 },
-            { key: 'partner2_name', value: DEFAULT_PARTNER_NAMES.partner2 },
-          ]);
+          console.log('No settings in DB');
         }
 
         // Fetch categories
-        try {
-          const { data: dbCategories, error: categoriesError } = await supabase.from('categories').select('*');
-          if (categoriesError) throw categoriesError;
-          
-          if (dbCategories && dbCategories.length > 0) {
-            console.log('Loaded categories from DB:', dbCategories.length);
-            setCategories(dbCategories.map(c => ({
-              id: c.id,
-              category: c.category,
-              label: c.label,
-              icon: c.icon,
-              recommended: Number(c.recommended),
-            })));
-          } else {
-            console.log('No categories in DB, seeding with defaults...');
-            // Seed with default categories
-            const { data: seeded, error: seedError } = await supabase.from('categories').insert(
-              DEFAULT_CATEGORIES.map(({ category, label, icon, recommended }) => ({
-                category, label, icon, recommended
-              }))
-            ).select();
-            
-            if (seedError) throw seedError;
-            
-            if (seeded) {
-              setCategories(seeded.map(c => ({
-                id: c.id,
-                category: c.category,
-                label: c.label,
-                icon: c.icon,
-                recommended: Number(c.recommended),
-              })));
-            }
-          }
-        } catch (categoryErr) {
-          console.warn('Failed to load categories from Supabase, using localStorage fallback:', categoryErr);
-          // Load from localStorage
-          const savedCategories = JSON.parse(localStorage.getItem('budget-categories') || '[]');
-          if (savedCategories.length > 0) {
-            setCategories(savedCategories);
-          } else {
-            // Use default categories
-            setCategories(DEFAULT_CATEGORIES.map((cat, index) => ({
-              id: `default-${index}`,
-              category: cat.category,
-              label: cat.label,
-              icon: cat.icon,
-              recommended: cat.recommended,
-            })));
-          }
+        const { data: dbCategories, error: categoriesError } = await supabase.from('categories').select('*');
+        if (categoriesError) throw categoriesError;
+
+        if (dbCategories && dbCategories.length > 0) {
+          console.log('Loaded categories from DB:', dbCategories.length);
+          setCategories(dbCategories.map(c => ({
+            id: c.id,
+            category: c.category,
+            label: c.label,
+            icon: c.icon,
+            recommended: Number(c.recommended),
+          })));
+        } else {
+          console.log('No categories in DB');
+          setCategories([]);
+        }
+
+        // Fetch goals
+        const { data: dbGoals, error: goalsError } = await supabase
+          .from('budget_goals')
+          .select('*')
+          .order('created_at', { ascending: true });
+        if (goalsError) throw goalsError;
+
+        if (dbGoals && dbGoals.length > 0) {
+          setGoals(dbGoals.map(goal => ({
+            id: goal.id,
+            category: goal.category as ExpenseCategory,
+            targetType: goal.target_type,
+            value: Number(goal.value),
+            startMonth: goal.start_month,
+          })));
+        } else {
+          setGoals([]);
         }
       } catch (err) {
-        console.error('Failed to load from Supabase, using defaults:', err);
-        setIncomes(SAMPLE_INCOMES);
-        setExpenses(SAMPLE_EXPENSES);
+        console.error('Failed to load from Supabase:', err);
+        setIncomes([SUPABASE_ERROR_INCOME]);
+        setExpenses([supabaseErrorExpense()]);
         setPartnerNamesState(DEFAULT_PARTNER_NAMES);
-
-        // Load categories from localStorage or use defaults
-        const savedCategories = JSON.parse(localStorage.getItem('budget-categories') || '[]');
-        if (savedCategories.length > 0) {
-          setCategories(savedCategories);
-        } else {
-          setCategories(DEFAULT_CATEGORIES.map((cat, index) => ({
-            id: `default-${index}`,
-            category: cat.category,
-            label: cat.label,
-            icon: cat.icon,
-            recommended: cat.recommended,
-          })));
-        }
+        setCategories([]);
+        setGoals([]);
       } finally {
         setLoading(false);
       }
@@ -313,10 +259,112 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const updateExpense = useCallback(async (id: string, expense: Omit<Expense, 'id'>) => {
+    const previousExpense = expenses.find(existingExpense => existingExpense.id === id);
+    if (!previousExpense) {
+      return;
+    }
+
+    const updatedExpense: Expense = { id, ...expense };
+    setExpenses(prev => prev.map(existingExpense => (existingExpense.id === id ? updatedExpense : existingExpense)));
+
+    try {
+      const updateData: Record<string, unknown> = {
+        category: expense.category,
+        description: expense.description,
+        amount: expense.amount,
+        date: expense.date,
+        recurring: Boolean(expense.recurring),
+        paid_by: expense.paidBy,
+        shared: expense.shared,
+        split_amounts: expense.splitAmounts ? JSON.stringify(expense.splitAmounts) : null,
+      };
+
+      const { error } = await supabase.from('expenses').update(updateData).eq('id', id);
+      if (error) {
+        throw error;
+      }
+    } catch (err) {
+      console.error('Exception while updating expense:', err);
+      setExpenses(prev => prev.map(existingExpense => (existingExpense.id === id ? previousExpense : existingExpense)));
+      alert('Error updating expense: ' + (err instanceof Error ? err.message : 'Unknown error'));
+    }
+  }, [expenses]);
+
   const removeExpense = useCallback(async (id: string) => {
     setExpenses(prev => prev.filter(e => e.id !== id));
     await supabase.from('expenses').delete().eq('id', id);
   }, []);
+
+  const addGoal = useCallback(async (goal: Omit<BudgetGoal, 'id'>) => {
+    try {
+      const { data, error } = await supabase.from('budget_goals').insert({
+        category: goal.category,
+        target_type: goal.targetType,
+        value: goal.value,
+        start_month: goal.startMonth,
+      }).select().single();
+
+      if (error) {
+        throw error;
+      }
+
+      if (data) {
+        setGoals(prev => [...prev, {
+          id: data.id,
+          category: data.category as ExpenseCategory,
+          targetType: data.target_type,
+          value: Number(data.value),
+          startMonth: data.start_month,
+        }]);
+      }
+    } catch (err) {
+      console.error('Supabase addGoal failed:', err);
+      alert('Error adding goal: ' + (err instanceof Error ? err.message : 'Unknown error'));
+    }
+  }, []);
+
+  const updateGoal = useCallback(async (id: string, updates: Partial<Omit<BudgetGoal, 'id'>>) => {
+    const previousGoal = goals.find(goal => goal.id === id);
+    if (!previousGoal) {
+      return;
+    }
+
+    setGoals(prev => prev.map(goal => (goal.id === id ? { ...goal, ...updates } : goal)));
+
+    try {
+      const updateData: Record<string, unknown> = {};
+      if (updates.category) updateData.category = updates.category;
+      if (updates.targetType) updateData.target_type = updates.targetType;
+      if (typeof updates.value === 'number') updateData.value = updates.value;
+      if (updates.startMonth) updateData.start_month = updates.startMonth;
+
+      const { error } = await supabase.from('budget_goals').update(updateData).eq('id', id);
+      if (error) {
+        throw error;
+      }
+    } catch (err) {
+      console.error('Supabase updateGoal failed:', err);
+      setGoals(prev => prev.map(goal => (goal.id === id ? previousGoal : goal)));
+      alert('Error updating goal: ' + (err instanceof Error ? err.message : 'Unknown error'));
+    }
+  }, [goals]);
+
+  const removeGoal = useCallback(async (id: string) => {
+    const previousGoals = goals;
+    setGoals(prev => prev.filter(goal => goal.id !== id));
+
+    try {
+      const { error } = await supabase.from('budget_goals').delete().eq('id', id);
+      if (error) {
+        throw error;
+      }
+    } catch (err) {
+      console.error('Supabase removeGoal failed:', err);
+      setGoals(previousGoals);
+      alert('Error removing goal: ' + (err instanceof Error ? err.message : 'Unknown error'));
+    }
+  }, [goals]);
 
   const setPartnerNames = useCallback(async (names: Record<Partner, string>) => {
     setPartnerNamesState(names);
@@ -351,56 +399,44 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
           icon: data.icon,
           recommended: Number(data.recommended),
         }]);
-        return;
       }
     } catch (err) {
-      console.warn('Supabase addCategory failed, using localStorage fallback:', err);
+      console.error('Supabase addCategory failed:', err);
+      alert('Error adding category: ' + (err instanceof Error ? err.message : 'Unknown error'));
     }
-
-    // Fallback to localStorage
-    const newCategory: StoredCategory = {
-      id: `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      ...category,
-    };
-    setCategories(prev => [...prev, newCategory]);
-
-    // Save to localStorage
-    const savedCategories = JSON.parse(localStorage.getItem('budget-categories') || '[]');
-    savedCategories.push(newCategory);
-    localStorage.setItem('budget-categories', JSON.stringify(savedCategories));
   }, []);
 
   const removeCategory = useCallback(async (id: string) => {
+    const previousCategories = categories;
     setCategories(prev => prev.filter(c => c.id !== id));
 
     try {
-      await supabase.from('categories').delete().eq('id', id);
+      const { error } = await supabase.from('categories').delete().eq('id', id);
+      if (error) {
+        throw error;
+      }
     } catch (err) {
-      console.warn('Supabase removeCategory failed, using localStorage fallback:', err);
-
-      // Fallback to localStorage
-      const savedCategories = JSON.parse(localStorage.getItem('budget-categories') || '[]');
-      const filteredCategories = savedCategories.filter((c: StoredCategory) => c.id !== id);
-      localStorage.setItem('budget-categories', JSON.stringify(filteredCategories));
+      console.error('Supabase removeCategory failed:', err);
+      setCategories(previousCategories);
+      alert('Error removing category: ' + (err instanceof Error ? err.message : 'Unknown error'));
     }
-  }, []);
+  }, [categories]);
 
   const updateCategory = useCallback(async (id: string, updates: Partial<StoredCategory>) => {
+    const previousCategories = categories;
     setCategories(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
 
     try {
-      await supabase.from('categories').update(updates).eq('id', id);
+      const { error } = await supabase.from('categories').update(updates).eq('id', id);
+      if (error) {
+        throw error;
+      }
     } catch (err) {
-      console.warn('Supabase updateCategory failed, using localStorage fallback:', err);
-
-      // Fallback to localStorage
-      const savedCategories = JSON.parse(localStorage.getItem('budget-categories') || '[]');
-      const updatedCategories = savedCategories.map((c: StoredCategory) =>
-        c.id === id ? { ...c, ...updates } : c
-      );
-      localStorage.setItem('budget-categories', JSON.stringify(updatedCategories));
+      console.error('Supabase updateCategory failed:', err);
+      setCategories(previousCategories);
+      alert('Error updating category: ' + (err instanceof Error ? err.message : 'Unknown error'));
     }
-  }, []);
+  }, [categories]);
 
   const computed = useMemo(() => {
     const expenseAppliesToMonth = (expense: Expense, month: string) => {
@@ -512,6 +548,55 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
     const currentQuarterAgg = aggregateForMonths(quarterMonths);
     const previousQuarterAgg = aggregateForMonths(previousYearQuarterMonths);
 
+    const { year: currentYearNumber, monthIndex: currentMonthIndex } = parseMonthKey(currentMonth);
+    const daysInMonth = new Date(currentYearNumber, currentMonthIndex + 1, 0).getDate();
+    const today = new Date();
+    const todayMonthKey = getCurrentMonthKey();
+    const isCurrentMonthView = currentMonth === todayMonthKey;
+    const isFutureMonthView = currentMonth > todayMonthKey;
+    const daysElapsed = isFutureMonthView ? 0 : isCurrentMonthView ? today.getDate() : daysInMonth;
+
+    const goalProgress: GoalProgress[] = goals
+      .filter(goal => goal.startMonth <= currentMonth)
+      .map(goal => {
+        const categoryData = categories.find(category => category.category === goal.category);
+        const currentAmount = expensesByCategory[goal.category] || 0;
+        const targetAmount = goal.targetType === 'fixed'
+          ? goal.value
+          : (goal.value / 100) * totalIncome;
+        const progressPct = targetAmount > 0 ? (currentAmount / targetAmount) * 100 : 0;
+        const expectedByNow = targetAmount > 0 ? targetAmount * (daysElapsed / Math.max(daysInMonth, 1)) : 0;
+        const variance = currentAmount - expectedByNow;
+
+        let status: GoalProgress['status'] = 'on-track';
+        if (targetAmount > 0 && currentAmount > targetAmount) {
+          status = 'exceeded';
+        } else if (targetAmount > 0 && variance > Math.max(targetAmount * 0.05, 10)) {
+          status = 'at-risk';
+        }
+
+        return {
+          id: goal.id,
+          category: goal.category,
+          label: categoryData?.label || goal.category,
+          icon: categoryData?.icon || '•',
+          targetType: goal.targetType,
+          configuredValue: goal.value,
+          targetAmount,
+          currentAmount,
+          progressPct,
+          expectedByNow,
+          variance,
+          daysElapsed,
+          daysInMonth,
+          status,
+          isCurrentMonth: isCurrentMonthView,
+        };
+      })
+      .sort((left, right) => right.progressPct - left.progressPct);
+
+    const pacingAlerts = goalProgress.filter(goal => goal.status !== 'on-track');
+
     const seasonalData = {
       current: {
         totalExpenses: currentQuarterAgg.total,
@@ -523,11 +608,11 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
       },
     };
 
-    return { totalIncome, incomeByPartner, totalExpenses, expensesByCategory, expensesByPartner, savingsRate, remainingBudget, alerts, recommendations, previousMonth, seasonalData };
-  }, [incomes, expenses, currentMonth, categories]);
+    return { totalIncome, incomeByPartner, totalExpenses, expensesByCategory, expensesByPartner, goalProgress, pacingAlerts, savingsRate, remainingBudget, alerts, recommendations, previousMonth, seasonalData };
+  }, [incomes, expenses, currentMonth, categories, goals]);
 
   return (
-    <BudgetContext.Provider value={{ incomes, expenses, partnerNames, setPartnerNames, addIncome, removeIncome, addExpense, removeExpense, loading, currentMonth, setCurrentMonth, categories, addCategory, removeCategory, updateCategory, ...computed }}>
+    <BudgetContext.Provider value={{ incomes, expenses, goals, partnerNames, setPartnerNames, addIncome, removeIncome, addExpense, updateExpense, removeExpense, addGoal, updateGoal, removeGoal, loading, currentMonth, setCurrentMonth, categories, addCategory, removeCategory, updateCategory, ...computed }}>
       {children}
     </BudgetContext.Provider>
   );
