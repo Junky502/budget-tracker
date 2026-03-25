@@ -48,7 +48,13 @@ export function CategoryExpenses({ category, onClose }: CategoryExpensesProps) {
                 <div>
                   <p className="text-sm text-foreground">{exp.description}</p>
                   <p className="text-xs text-muted-foreground">
-                    {partnerNames[exp.paidBy]} · {exp.shared ? 'Shared' : 'Personal'} · {exp.date}
+                    {partnerNames[exp.paidBy]} · {exp.shared ? 'Shared' : 'Personal'}
+                    {exp.recurring ? (
+                      <span className="ml-2 inline-flex items-center rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
+                        Recurring
+                      </span>
+                    ) : null}
+                    <span className="ml-2">· {exp.date}</span>
                   </p>
                 </div>
               </div>
