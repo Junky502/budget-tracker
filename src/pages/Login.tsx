@@ -1,28 +1,36 @@
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { CodeLockKeypad } from '@/components/CodeLockKeypad';
 import { AlertCircle } from 'lucide-react';
 
 export default function Login() {
+  const PIN_LENGTH = 4;
   const { login } = useAuth();
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
+  const [shakeTrigger, setShakeTrigger] = useState(0);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handlePinChange = (nextPin: string) => {
+    if (error) {
+      setError('');
+    }
+    setPin(nextPin.replace(/\D/g, '').slice(0, PIN_LENGTH));
+  };
+
+  const handleSubmit = (submittedPin: string) => {
     setError('');
 
-    if (!pin) {
-      setError('Please enter a PIN');
+    if (submittedPin.length !== PIN_LENGTH) {
+      setError(`Enter ${PIN_LENGTH} digits`);
       return;
     }
 
-    const success = login(pin);
+    const success = login(submittedPin);
     if (!success) {
       setError('Incorrect PIN');
       setPin('');
+      setShakeTrigger((prev) => prev + 1);
     }
   };
 
@@ -40,20 +48,23 @@ export default function Login() {
             </div>
             <h1 className="text-2xl font-bold text-gray-900">Budget Tracker</h1>
             <p className="text-gray-600 text-sm mt-2">Enter PIN to access</p>
+            <p className="text-gray-500 text-xs mt-1">This device stays trusted for 30 minutes after login</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Input
-                type="password"
-                placeholder="Enter PIN"
-                value={pin}
-                onChange={(e) => setPin(e.target.value)}
-                maxLength={10}
-                className="text-center text-2xl font-bold tracking-widest"
-                autoFocus
-              />
-            </div>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSubmit(pin);
+            }}
+            className="space-y-4"
+          >
+            <CodeLockKeypad
+              value={pin}
+              maxLength={PIN_LENGTH}
+              onChange={handlePinChange}
+              onSubmit={handleSubmit}
+              shakeTrigger={shakeTrigger}
+            />
 
             {error && (
               <Alert variant="destructive">
@@ -61,14 +72,10 @@ export default function Login() {
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
-
-            <Button type="submit" className="w-full" size="lg">
-              Login
-            </Button>
           </form>
 
           <p className="text-center text-xs text-gray-500 mt-6">
-            This budget tracker is password protected
+            Logging out clears trusted access immediately
           </p>
         </div>
       </div>

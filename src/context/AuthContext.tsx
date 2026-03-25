@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { clearTrustedSession, isTrustedSessionValid, writeTrustedSession } from '@/lib/trustedSession';
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -35,6 +36,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.error('Exception while fetching PIN:', err);
         setCorrectPin(null);
       } finally {
+        if (isTrustedSessionValid()) {
+          setIsAuthenticated(true);
+        } else {
+          clearTrustedSession();
+        }
         setLoading(false);
       }
     }
@@ -45,12 +51,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = (pin: string): boolean => {
     if (correctPin && pin === correctPin) {
       setIsAuthenticated(true);
+      writeTrustedSession();
       return true;
     }
     return false;
   };
 
   const logout = () => {
+    clearTrustedSession();
     setIsAuthenticated(false);
   };
 
