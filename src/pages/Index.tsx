@@ -15,6 +15,7 @@ import { RecentExpenses } from '@/components/budget/RecentExpenses';
 import { GoalsPanel } from '@/components/budget/GoalsPanel';
 import { PaceCheckPanel } from '@/components/budget/PaceCheckPanel';
 import { BillsCalendar } from '@/components/budget/BillsCalendar';
+import { PartnerRemaining } from '@/components/budget/PartnerRemaining';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -295,6 +296,11 @@ function IndexContent() {
                 </motion.div>
                 <motion.div variants={fadeUp}>
                   <PaceCheckPanel />
+                </motion.div>
+              </div>
+              <div className="grid gap-6">
+                <motion.div variants={fadeUp}>
+                  <PartnerRemaining />
                 </motion.div>
               </div>
 

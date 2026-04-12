@@ -10,6 +10,35 @@ const COLORS = [
   'hsl(10, 45%, 45%)', 'hsl(90, 35%, 50%)',
 ];
 
+const renderCustomLabel = (entry: any) => {
+  const total = entry.payload.reduce((sum: number, item: any) => sum + item.value, 0);
+  const percentage = total > 0 ? ((entry.value / total) * 100).toFixed(0) : 0;
+  
+  // Don't display labels for segments under 5%
+  if (parseInt(percentage) < 5) {
+    return null;
+  }
+  
+  const RADIAN = Math.PI / 180;
+  const radius = 75; // Position inside the donut
+  const x = entry.cx + radius * Math.cos(-entry.midAngle * RADIAN);
+  const y = entry.cy + radius * Math.sin(-entry.midAngle * RADIAN);
+
+  return (
+    <text 
+      x={x} 
+      y={y} 
+      fill="white" 
+      textAnchor="middle" 
+      dominantBaseline="central"
+      fontSize="12"
+      fontWeight="bold"
+    >
+      {percentage}%
+    </text>
+  );
+};
+
 export function SpendingChart() {
   const { expensesByCategory, categories } = useBudget();
 
@@ -25,7 +54,17 @@ export function SpendingChart() {
         <div className="h-[220px] w-full max-w-[220px] flex-shrink-0">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
-              <Pie data={data} cx="50%" cy="50%" innerRadius={55} outerRadius={95} paddingAngle={2} dataKey="value">
+              <Pie 
+                data={data} 
+                cx="50%" 
+                cy="50%" 
+                innerRadius={55} 
+                outerRadius={95} 
+                paddingAngle={2} 
+                dataKey="value"
+                label={(entry) => renderCustomLabel({ ...entry, payload: data })}
+                labelLine={false}
+              >
                 {data.map((_, i) => (
                   <Cell key={i} fill={COLORS[i % COLORS.length]} stroke="hsl(var(--card))" strokeWidth={2} />
                 ))}
